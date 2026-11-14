@@ -51,6 +51,17 @@ $cas = [
     ['asset absent', asset('assets/absent.css'), '/assets/absent.css?v=0'],
 ];
 
+// image() : fichier absent → SVG de remplacement, valide même avec un chemin piégé
+$img = image('absent/<piege>&".jpg', '<b>"alt"', 600, 400);
+preg_match('/src="(data:image\/svg\+xml,[^"]+)"/', $img, $src);
+$svg = rawurldecode(substr(html_entity_decode($src[1] ?? ''), strlen('data:image/svg+xml,')));
+$cas[] = ['image src data:',      isset($src[1]), true];
+$cas[] = ['image SVG bien formé', @simplexml_load_string($svg) !== false, true];
+$cas[] = ['image alt échappé',    str_contains($img, 'alt="&lt;b&gt;&quot;alt&quot;"'), true];
+$cas[] = ['image dimensions',     str_contains($img, 'width="600" height="400"'), true];
+$cas[] = ['image classe',         str_contains($img, 'class="image-remplacement"'), true];
+$cas[] = ['image paresseuse',     str_contains($img, 'loading="lazy"'), true];
+
 foreach ($cas as [$nom, $obtenu, $attendu]) {
     if (!verifier($nom, $obtenu, $attendu)) {
         $echecs++;

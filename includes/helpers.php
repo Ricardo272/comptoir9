@@ -127,3 +127,61 @@ function prix(int $centimes): string
     $reste = abs($centimes) % 100;
     return $signe . number_format($euros, 0, ',', "\u{202F}") . ',' . sprintf('%02d', $reste) . "\u{00A0}€";
 }
+
+/**
+ * Affiche une image du dossier assets/img/.
+ *
+ * Si le fichier n'existe pas encore, affiche à la place une image de remplacement
+ * aux mêmes proportions, avec le chemin attendu écrit dessus.
+ * Le jour où la vraie photo arrive, il suffit de la déposer au bon endroit.
+ *
+ * @param string $chemin       chemin dans assets/img/, ex. « produits/cocotte-fonte-24.jpg »
+ * @param string $alt          description de l'image ; vide si le texte voisin la décrit déjà
+ * @param int    $largeur      largeur réelle de l'image, en pixels
+ * @param int    $hauteur      hauteur réelle de l'image, en pixels
+ * @param string $classe       classe CSS éventuelle
+ * @param bool   $prioritaire  true pour une image visible dès l'ouverture de la page
+ */
+function image(string $chemin, string $alt, int $largeur, int $hauteur, string $classe = '', bool $prioritaire = false): string
+{
+    // width et height : le navigateur réserve la place avant le chargement,
+    // la page ne « saute » pas.
+    $attributs = sprintf('alt="%s" width="%d" height="%d"', e($alt), $largeur, $hauteur);
+    $attributs .= $prioritaire ? ' fetchpriority="high"' : ' loading="lazy" decoding="async"';
+
+    if (is_file(__DIR__ . '/../assets/img/' . $chemin)) {
+        $src = asset('assets/img/' . $chemin);
+    } else {
+        $src = imageRemplacement($chemin, $largeur, $hauteur);
+        $classe = trim($classe . ' image-remplacement');
+    }
+
+    if ($classe !== '') {
+        $attributs .= ' class="' . e($classe) . '"';
+    }
+
+    return '<img src="' . e($src) . '" ' . $attributs . '>';
+}
+
+/**
+ * Fabrique une image SVG de remplacement (fond papier rayé + chemin attendu)
+ * et la renvoie sous forme d'adresse « data: » : aucun fichier n'est créé.
+ */
+function imageRemplacement(string $chemin, int $largeur, int $hauteur): string
+{
+    $taille = max(14, (int) round(min($largeur, $hauteur) / 20));
+    $milieu = $hauteur / 2;
+
+    $svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' . $largeur . ' ' . $hauteur . '">'
+         . '<defs><pattern id="r" width="18" height="18" patternUnits="userSpaceOnUse" patternTransform="rotate(-45)">'
+         . '<line x1="0" y1="0" x2="0" y2="18" stroke="#0F4C3A" stroke-opacity=".14" stroke-width="3"/></pattern></defs>'
+         . '<rect width="100%" height="100%" fill="#F5F3EE"/>'
+         . '<rect width="100%" height="100%" fill="url(#r)"/>'
+         . '<g font-family="Segoe UI, Arial, sans-serif" text-anchor="middle" fill="#16211D">'
+         . '<text x="50%" y="' . ($milieu - $taille * 0.4) . '" font-size="' . $taille . '" font-weight="700">IMAGE DE REMPLACEMENT</text>'
+         . '<text x="50%" y="' . ($milieu + $taille) . '" font-size="' . round($taille * 0.8) . '">'
+         . htmlspecialchars($chemin, ENT_XML1 | ENT_QUOTES, 'UTF-8') . '</text>'
+         . '</g></svg>';
+
+    return 'data:image/svg+xml,' . rawurlencode($svg);
+}

@@ -673,6 +673,201 @@ summary.nav__lien:hover,
     border-color: var(--encre);
 }
 
+/* Accent : réservé à l'action principale d'achat */
+.bouton--accent {
+    background: var(--jaune);
+    color: var(--encre);
+    border-color: var(--encre);
+}
+
+.bouton--contour {
+    background: none;
+    color: var(--sapin);
+}
+
+.bouton--accent:hover,
+.bouton--contour:hover {
+    background: var(--encre);
+    color: var(--papier);
+}
+
+.groupe-boutons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--espace-s);
+}
+
+/* --- Filet de ticket : sépare deux sections ------------------------------- */
+.section--filet > .conteneur {
+    padding-top: var(--espace-l);
+    border-top: var(--pointille);
+}
+
+/* --- Étiquette de prix -----------------------------------------------------
+   Deux boîtes à coin coupé (clip-path) : la première, encre, dépasse de 2px
+   et sert de contour ; la seconde, jaune, porte le prix. Une bordure CSS
+   ne suivrait pas le coin coupé. Le « trou » est un dégradé radial. */
+.etiquette {
+    display: inline-block;
+    padding: 2px;
+    background: var(--encre);
+    clip-path: polygon(.7em 0, 100% 0, 100% 100%, 0 100%, 0 .7em);
+    font-size: 1.125rem;
+    vertical-align: middle;
+}
+
+.etiquette__fond {
+    display: block;
+    padding: .3em .7em .3em 1.5em;
+    background:
+        radial-gradient(circle at .8em 50%, var(--papier) 0 .16em, var(--encre) .17em .25em, transparent .26em),
+        var(--jaune);
+    clip-path: polygon(calc(.7em - 1px) 0, 100% 0, 100% 100%, 0 100%, 0 calc(.7em - 1px));
+}
+
+.prix--barre {
+    margin-left: .5em;
+    font-size: .9375rem;
+}
+
+/* --- Pastilles : posées sur la photo d'un produit -------------------------- */
+.pastille {
+    padding: .2em .6em;
+    background: var(--papier);
+    color: var(--encre);
+    border: var(--trait);
+    border-radius: var(--rayon);
+    font-size: .8125rem;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.pastille--promo {
+    background: var(--encre);
+    color: var(--jaune);
+}
+
+.pastille--epuise {
+    border-style: dashed;
+}
+
+/* --- Grille de cartes ------------------------------------------------------ */
+.grille {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--espace-m) var(--espace-s);
+}
+
+.grille > * {
+    max-width: none;
+}
+
+@media (min-width: 48rem) {
+    .grille {
+        grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+        gap: var(--espace-l) var(--espace-m);
+    }
+}
+
+/* --- Carte produit --------------------------------------------------------- */
+.carte-produit {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: .375rem;
+}
+
+.carte-produit__photo {
+    position: relative;
+    border: var(--trait);
+    border-radius: var(--rayon);
+    overflow: hidden;
+}
+
+.carte-produit__photo img {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+}
+
+.carte-produit__photo .pastille {
+    position: absolute;
+    top: var(--espace-xs);
+    left: var(--espace-xs);
+}
+
+.carte-produit__nom {
+    margin-top: .25rem;
+    font-family: var(--police-texte);
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.35;
+}
+
+.carte-produit__nom a {
+    color: var(--encre);
+    text-decoration: none;
+}
+
+/* Le lien du nom couvre toute la carte : un seul lien, une grande zone de clic */
+.carte-produit__nom a::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+}
+
+.carte-produit:hover .carte-produit__nom a {
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+}
+
+/* Le focus entoure la carte entière, pas seulement le nom */
+.carte-produit__nom a:focus-visible {
+    outline: none;
+    box-shadow: none;
+}
+
+.carte-produit__nom a:focus-visible::after {
+    outline: 3px solid var(--encre);
+    outline-offset: 4px;
+    border-radius: var(--rayon);
+}
+
+.carte-produit__boutique {
+    font-size: .875rem;
+}
+
+.carte-produit__prix {
+    margin-top: auto;
+    padding-top: .25rem;
+}
+
+.carte-produit--epuise .carte-produit__photo img {
+    opacity: .45;
+}
+
+/* --- Carte boutique -------------------------------------------------------- */
+.carte-boutique {
+    display: flex;
+    flex-direction: column;
+    gap: .375rem;
+    padding: var(--espace-m);
+    border: var(--trait);
+    border-radius: var(--rayon);
+}
+
+.carte-boutique__nom a {
+    color: var(--encre);
+}
+
+.carte-boutique__lieu {
+    color: var(--sapin);
+    font-size: .875rem;
+    font-weight: 600;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
 
 /* ==========================================================================
    10. Pages
