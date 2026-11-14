@@ -7,6 +7,7 @@
  *   $pageTitle       titre de la page (le nom du site est ajouté automatiquement)
  *   $pageDescription description pour les moteurs de recherche
  *   $pageNoIndex     true pour demander aux moteurs de ne pas indexer la page
+ *   $pageCanonique   adresse officielle si elle a des paramètres (ex. « catalogue.php?rayon=cuisine »)
  */
 require_once __DIR__ . '/helpers.php';
 require_once __DIR__ . '/donnees/rayons.php';
@@ -22,7 +23,7 @@ $titreComplet = isset($pageTitle)
 
 // Adresse officielle de la page (sans paramètres) : « /index.php » devient « / »
 $fichierPage  = basename($_SERVER['SCRIPT_NAME']);
-$urlCanonique = urlAbsolue($fichierPage === 'index.php' ? '' : $fichierPage);
+$urlCanonique = urlAbsolue($pageCanonique ?? ($fichierPage === 'index.php' ? '' : $fichierPage));
 ?>
 <!DOCTYPE html>
 <html lang="fr">

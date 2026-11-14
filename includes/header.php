@@ -2,6 +2,7 @@
 /**
  * En-tête commun : lien d'évitement, logo, recherche, panier,
  * menu des rayons, puis le bandeau du mode démo.
+ * $rechercheQ (facultatif) : texte à remettre dans le champ de recherche.
  */
 ?>
 <a class="lien-evitement" href="#contenu">Aller au contenu</a>
@@ -15,7 +16,7 @@
         <!-- La recherche est un simple formulaire GET : elle marche sans JavaScript -->
         <form class="recherche" action="<?= e(url('catalogue.php')) ?>" method="get" role="search">
             <label class="visuellement-cache" for="recherche-q">Rechercher un produit</label>
-            <input class="recherche__champ" id="recherche-q" type="search" name="q" placeholder="Rechercher un produit" maxlength="80">
+            <input class="recherche__champ" id="recherche-q" type="search" name="q" value="<?= e($rechercheQ ?? '') ?>" placeholder="Rechercher un produit" maxlength="80">
             <button class="recherche__bouton" type="submit">Rechercher</button>
         </form>
 

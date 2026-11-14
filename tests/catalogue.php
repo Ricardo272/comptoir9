@@ -75,6 +75,40 @@ $cas[] = ['boutique suspendue absente',              count(boutiques()), 4];
 db()->rollBack();
 $cas[] = ['base intacte après le test', count(produitsNouveautes(200)), 80];
 
+// --- Recherche, filtres, tri, pagination ---------------------------------------
+$total = fn (array $filtres) => rechercherProduits($filtres)['total'];
+$sql   = fn (string $requete) => (int) db()->query($requete)->fetchColumn(); // comptage indépendant
+
+$cas[] = ['sans filtre : 80, 4 pages',   array_slice(rechercherProduits([]), 0, 2), ['total' => 80, 'pages' => 4]];
+$cas[] = ['page 1 : 24 produits',        count(rechercherProduits([])['produits']), 24];
+$cas[] = ['page 4 : 8 produits',         count(rechercherProduits([], 4)['produits']), 8];
+$cas[] = ['page 99 ramenée à la 4',      rechercherProduits([], 99)['page'], 4];
+$cas[] = ['page 0 ramenée à la 1',       rechercherProduits([], 0)['page'], 1];
+$cas[] = ['rayon cuisine : 16',          $total(['rayon' => trouverRayon('cuisine')]), 16];
+$cas[] = ['sous-rayon cuisson : 4',      $total(['rayon' => trouverRayon('cuisson')]), 4];
+$cas[] = ['bonnes affaires : 19',        $total(['rayon' => trouverRayon('bonnes-affaires')]), 19];
+$cas[] = ['rayon inconnu',               trouverRayon('inconnu'), null];
+$cas[] = ['boutique braquet : 14',       $total(['boutique' => 'braquet']), 14];
+$cas[] = ['cuisine chez Maison Lin : 2', $total(['rayon' => trouverRayon('cuisine'), 'boutique' => 'maison-lin']), 2];
+$cas[] = ['en stock : 75',               $total(['en_stock' => true]), 75];
+$cas[] = ['de 10 à 20 €',                $total(['prix_min' => 1000, 'prix_max' => 2000]),
+                                         $sql('SELECT COUNT(*) FROM produits WHERE prix BETWEEN 1000 AND 2000')];
+$cas[] = ['recherche « lin »',           $total(['q' => 'lin']),
+                                         $sql("SELECT COUNT(*) FROM produits WHERE nom LIKE '%lin%' OR description LIKE '%lin%'")];
+$cas[] = ['recherche sans casse ni accent', $total(['q' => 'VELO']), $total(['q' => 'vélo'])];
+$cas[] = ['recherche « vélo » trouve',   $total(['q' => 'vélo']) > 0, true];
+$cas[] = ['deux mots : tous exigés',     $total(['q' => 'couteau office']), 1];
+$cas[] = ['apostrophe',                  $total(['q' => "d'office"]), 1];
+$cas[] = ['% cherché tel quel : 0',      $total(['q' => '%']), 0];
+$cas[] = ['_ cherché tel quel : 0',      $total(['q' => '_']), 0];
+$cas[] = ['tentative d\'injection : 0',  $total(['q' => "' OR 1=1 -- "]), 0];
+$cas[] = ['tri prix croissant',          rechercherProduits(['tri' => 'prix-asc'])['produits'][0]['prix'],
+                                         $sql('SELECT MIN(prix) FROM produits')];
+$cas[] = ['tri prix décroissant',        rechercherProduits(['tri' => 'prix-desc'])['produits'][0]['prix'],
+                                         $sql('SELECT MAX(prix) FROM produits')];
+$cas[] = ['tri inconnu = nouveautés',    array_column(rechercherProduits(['tri' => 'p.id; DROP'])['produits'], 'slug'),
+                                         array_column(rechercherProduits([])['produits'], 'slug')];
+
 // --- Droits de l'utilisateur du site : il ne doit pas pouvoir toucher à la structure
 $refus = function (string $sql): bool {
     try {

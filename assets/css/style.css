@@ -921,6 +921,113 @@ summary.nav__lien:hover,
     }
 }
 
+/* --- Catalogue : fil d'Ariane, sous-rayons, filtres, pagination ------------- */
+.fil-ariane ol {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .25rem .5rem;
+    font-size: .875rem;
+}
+
+.fil-ariane li + li::before {
+    content: "›";
+    margin-right: .5rem;
+}
+
+/* Liens en pastilles : sous-rayons et numéros de page */
+.sous-rayons,
+.pagination ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--espace-xs);
+}
+
+.sous-rayons a,
+.pagination a {
+    display: block;
+    padding: .375rem .875rem;
+    color: var(--encre);
+    border: var(--trait);
+    border-radius: var(--rayon);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.sous-rayons a:hover,
+.pagination a:hover {
+    background: var(--jaune);
+}
+
+.sous-rayons a[aria-current="page"],
+.pagination a[aria-current="page"] {
+    background: var(--encre);
+    color: var(--papier);
+}
+
+.pagination {
+    padding-top: var(--espace-m);
+}
+
+/* Champs de formulaire */
+.champ label {
+    display: block;
+    font-size: .875rem;
+    font-weight: 600;
+}
+
+.champ input:not([type="checkbox"]),
+.champ select {
+    width: 100%;
+    padding: .5rem .625rem;
+    background: var(--papier);
+    border: var(--trait);
+    border-radius: var(--rayon);
+}
+
+.champ--case {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+}
+
+.champ--case input {
+    width: 1.25rem;
+    height: 1.25rem;
+    accent-color: var(--sapin);
+}
+
+.filtres {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--espace-s);
+    align-items: end;
+    padding: var(--espace-s);
+    border: var(--pointille);
+    border-radius: var(--rayon);
+}
+
+.filtres > * {
+    max-width: none;
+}
+
+.filtres__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--espace-s);
+    grid-column: 1 / -1;
+}
+
+@media (min-width: 48rem) {
+    .filtres {
+        grid-template-columns: 2fr 1fr 1fr 2fr auto;
+    }
+
+    .filtres__actions {
+        grid-column: auto;
+    }
+}
+
 /* --- Les 3 engagements ----------------------------------------------------- */
 .engagements {
     display: grid;
