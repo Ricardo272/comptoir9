@@ -1,0 +1,752 @@
+/* ==========================================================================
+   Comptoir 9 — feuille de style unique
+   Sommaire :
+     1. Polices
+     2. Variables
+     3. Base (remise à zéro légère)
+     4. Mise en page
+     5. En-tête, recherche et navigation
+     6. Bandeau démo
+     7. Pied de page
+     8. Utilitaires
+     9. Composants (phase 2)
+    10. Pages (accueil, erreurs)
+    11. Animations réduites
+   Écrite « mobile d'abord » : les règles de base visent le téléphone,
+   les @media (min-width) ajoutent la mise en page des grands écrans.
+   ========================================================================== */
+
+
+/* ==========================================================================
+   1. Polices hébergées localement (licences OFL dans assets/fonts/licences/)
+   font-display: swap → le texte s'affiche tout de suite dans une police de
+   secours, puis la vraie police la remplace dès qu'elle est chargée.
+   ========================================================================== */
+
+/* Titres : police variable, graisses 200 à 800 dans un seul fichier */
+@font-face {
+    font-family: "Bricolage Grotesque";
+    src: url("../fonts/bricolage-grotesque-latin-wght-normal.woff2") format("woff2");
+    font-weight: 200 800;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* Texte : police variable, graisses 100 à 900 */
+@font-face {
+    font-family: "Inter";
+    src: url("../fonts/inter-latin-wght-normal.woff2") format("woff2");
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* Ticket : UNIQUEMENT pour les prix et les numéros de commande */
+@font-face {
+    font-family: "DM Mono";
+    src: url("../fonts/dm-mono-latin-400-normal.woff2") format("woff2");
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+
+/* ==========================================================================
+   2. Variables
+   ========================================================================== */
+:root {
+    /* Les 4 couleurs du site, et rien d'autre */
+    --papier: #F5F3EE;  /* fond */
+    --encre:  #16211D;  /* texte */
+    --sapin:  #0F4C3A;  /* couleur principale : en-tête, liens, boutons */
+    --jaune:  #FFC531;  /* accent : prix, promotions, panier */
+    /* Contrastes mesurés (seuil pour du texte : 4,5) :
+       encre sur papier 14,92 · sapin sur papier 8,95 · papier sur sapin 8,95
+       encre sur jaune 10,46 · jaune sur sapin 6,28 · jaune sur papier 1,43.
+       Donc : jamais de texte jaune sur papier, et un fond jaune posé sur le
+       papier a toujours un contour encre (sinon on ne voit pas son bord). */
+
+    --police-titre:  "Bricolage Grotesque", "Trebuchet MS", "Segoe UI", sans-serif;
+    --police-texte:  "Inter", "Segoe UI", Arial, sans-serif;
+    --police-ticket: "DM Mono", Consolas, "Courier New", monospace;
+
+    /* Tailles fluides : grandissent avec l'écran, entre un minimum et un maximum */
+    --taille-texte: 1rem;
+    --taille-h1: clamp(2.25rem, 5vw + 1rem, 4rem);
+    --taille-h2: clamp(1.625rem, 2.5vw + 1rem, 2.5rem);
+    --taille-h3: 1.25rem;
+
+    --espace-xs: .5rem;
+    --espace-s:  1rem;
+    --espace-m:  1.5rem;
+    --espace-l:  clamp(2rem, 5vw, 3.5rem);
+    --espace-xl: clamp(3rem, 8vw, 5.5rem);
+
+    --largeur-max: 76rem;
+    --rayon: 6px;
+    --trait: 2px solid var(--encre);
+    /* Filet de ticket de caisse */
+    --pointille: 2px dashed currentColor;
+}
+
+
+/* ==========================================================================
+   3. Base
+   ========================================================================== */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+* {
+    margin: 0;
+}
+
+/* La remise à zéro ci-dessus décentre les fenêtres <dialog> : on rend le centrage */
+dialog {
+    margin: auto;
+}
+
+html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+}
+
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--papier);
+    color: var(--encre);
+    font-family: var(--police-texte);
+    font-size: var(--taille-texte);
+    line-height: 1.6;
+}
+
+main {
+    flex: 1;
+}
+
+h1,
+h2,
+h3 {
+    font-family: var(--police-titre);
+    font-weight: 700;
+    line-height: 1.1;
+    text-wrap: balance;
+}
+
+h1 { font-size: var(--taille-h1); letter-spacing: -.02em; }
+h2 { font-size: var(--taille-h2); letter-spacing: -.01em; }
+h3 { font-size: var(--taille-h3); }
+
+p,
+li {
+    max-width: 68ch;
+}
+
+a {
+    color: var(--sapin);
+    text-underline-offset: .2em;
+}
+
+a:hover {
+    text-decoration-thickness: 2px;
+}
+
+img,
+svg {
+    display: block;
+    max-width: 100%;
+    height: auto;
+}
+
+button,
+input,
+select,
+textarea {
+    font: inherit;
+    color: inherit;
+}
+
+address {
+    font-style: normal;
+}
+
+ul[role="list"],
+ol[role="list"] {
+    list-style: none;
+    padding: 0;
+}
+
+/* Focus clavier toujours visible. Deux anneaux, clair puis foncé :
+   l'un des deux ressort quel que soit le fond (papier, sapin, encre, jaune). */
+:focus-visible {
+    outline: 3px solid var(--encre);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 2px var(--papier);
+}
+
+.entete :focus-visible,
+.pied :focus-visible {
+    outline-color: var(--jaune);
+    box-shadow: none;
+}
+
+
+/* ==========================================================================
+   4. Mise en page
+   ========================================================================== */
+.conteneur {
+    width: 100%;
+    max-width: var(--largeur-max);
+    margin-inline: auto;
+    padding-inline: var(--espace-s);
+}
+
+.section {
+    padding-block: var(--espace-l);
+}
+
+.section > .conteneur > * + * {
+    margin-top: var(--espace-s);
+}
+
+@media (min-width: 48rem) {
+    .conteneur {
+        padding-inline: var(--espace-m);
+    }
+}
+
+
+/* ==========================================================================
+   5. En-tête, recherche et navigation
+   ========================================================================== */
+.entete {
+    background: var(--sapin);
+    color: var(--papier);
+}
+
+/* Ligne du haut : logo et panier sur la première ligne, recherche dessous
+   sur téléphone ; les trois sur une ligne à partir de la tablette. */
+.entete__barre {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--espace-xs) var(--espace-s);
+    padding-block: var(--espace-s);
+}
+
+.logo {
+    display: inline-flex;
+    align-items: center;
+    gap: .35em;
+    color: var(--papier);
+    font-family: var(--police-titre);
+    font-size: 1.625rem;
+    font-weight: 800;
+    letter-spacing: -.02em;
+    line-height: 1;
+    text-decoration: none;
+}
+
+/* Le « 9 » signature : une pastille jaune, comme une étiquette */
+.logo__neuf {
+    display: inline-grid;
+    place-items: center;
+    width: 1.5em;
+    height: 1.5em;
+    background: var(--jaune);
+    color: var(--encre);
+    border-radius: var(--rayon);
+}
+
+.entete__panier {
+    padding: .5rem .875rem;
+    background: var(--jaune);
+    color: var(--encre);
+    border-radius: var(--rayon);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.entete__panier:hover,
+.entete__panier[aria-current="page"] {
+    background: var(--papier);
+}
+
+.recherche {
+    display: flex;
+    flex: 1 1 100%;
+    order: 3;
+}
+
+.recherche__champ {
+    flex: 1;
+    min-width: 0;
+    padding: .625rem .875rem;
+    background: var(--papier);
+    color: var(--encre);
+    border: 0;
+    border-radius: var(--rayon) 0 0 var(--rayon);
+}
+
+.recherche__champ::placeholder {
+    color: var(--encre);
+    opacity: .7;
+}
+
+.recherche__bouton {
+    padding: .625rem 1rem;
+    background: var(--encre);
+    color: var(--papier);
+    border: 0;
+    border-radius: 0 var(--rayon) var(--rayon) 0;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.recherche__bouton:hover {
+    background: var(--jaune);
+    color: var(--encre);
+}
+
+@media (min-width: 48rem) {
+    .entete__barre {
+        flex-wrap: nowrap;
+        gap: var(--espace-l);
+    }
+
+    .recherche {
+        flex: 1 1 auto;
+        order: 0;
+        max-width: 36rem;
+    }
+}
+
+/* --- Menu ---------------------------------------------------------------- */
+.entete__menu {
+    padding-bottom: var(--espace-xs);
+}
+
+.nav-bouton {
+    display: none;
+    align-items: center;
+    gap: .625rem;
+    padding: .5rem .75rem;
+    background: none;
+    color: var(--papier);
+    border: 2px solid var(--papier);
+    border-radius: var(--rayon);
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* Trois traits dessinés en CSS */
+.nav-bouton__icone,
+.nav-bouton__icone::before,
+.nav-bouton__icone::after {
+    display: block;
+    width: 1.125rem;
+    height: 2px;
+    background: currentColor;
+}
+
+.nav-bouton__icone {
+    position: relative;
+}
+
+.nav-bouton__icone::before,
+.nav-bouton__icone::after {
+    content: "";
+    position: absolute;
+    left: 0;
+}
+
+.nav-bouton__icone::before { top: -6px; }
+.nav-bouton__icone::after  { top: 6px; }
+
+.nav__liste {
+    display: flex;
+    flex-direction: column;
+    padding-top: var(--espace-xs);
+}
+
+.nav__liste > li {
+    max-width: none;
+    border-top: 1px solid rgb(245 243 238 / .25);
+}
+
+.nav__lien {
+    display: block;
+    padding: .75rem .25rem;
+    color: var(--papier);
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+a.nav__lien:hover,
+summary.nav__lien:hover,
+.nav__lien[aria-current="page"] {
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: .3em;
+}
+
+.nav__lien--affaires {
+    color: var(--jaune);
+}
+
+.nav__secondaire .nav__lien {
+    font-weight: 400;
+}
+
+/* Sous-menu d'un rayon : <summary> sans son triangle d'origine, remplacé
+   par un chevron qui se retourne à l'ouverture. */
+.rayon > summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .5rem;
+    list-style: none;
+}
+
+.rayon > summary::-webkit-details-marker {
+    display: none;
+}
+
+.rayon > summary::after {
+    content: "";
+    flex: none;
+    width: .5em;
+    height: .5em;
+    border-right: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    transform: translateY(-25%) rotate(45deg);
+    transition: transform .15s;
+}
+
+.rayon[open] > summary::after {
+    transform: translateY(25%) rotate(-135deg);
+}
+
+.rayon__liste {
+    padding: 0 0 var(--espace-xs) var(--espace-s);
+}
+
+.rayon__liste > li {
+    max-width: none;
+}
+
+.rayon__lien {
+    display: block;
+    padding: .5rem .25rem;
+    color: var(--papier);
+    text-decoration: none;
+}
+
+.rayon__lien:hover {
+    text-decoration: underline;
+}
+
+.rayon__lien--tout {
+    font-weight: 600;
+}
+
+/* Téléphone, avec JavaScript : le menu est replié derrière le bouton.
+   Sans JavaScript (pas de classe « js »), le bouton est caché et la liste reste visible. */
+@media (max-width: 61.999rem) {
+    .js .nav-bouton {
+        display: inline-flex;
+    }
+
+    .js .nav-bouton[aria-expanded="false"] + .nav {
+        display: none;
+    }
+}
+
+/* Grand écran : rayons sur une ligne, sous-menus en panneau flottant */
+@media (min-width: 62rem) {
+    .entete__menu {
+        padding-bottom: 0;
+        border-top: 1px solid rgb(245 243 238 / .25);
+    }
+
+    .nav__liste {
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0 var(--espace-m);
+        padding-top: 0;
+    }
+
+    .nav__liste > li {
+        border-top: 0;
+    }
+
+    .nav__lien {
+        padding: .75rem 0;
+    }
+
+    /* Les liens secondaires sont poussés à droite */
+    .nav__secondaire--premier {
+        margin-left: auto;
+    }
+
+    .nav__secondaire .nav__lien {
+        font-size: .9375rem;
+    }
+
+    .nav__rayon {
+        position: relative;
+    }
+
+    .rayon__liste {
+        position: absolute;
+        z-index: 10;
+        top: 100%;
+        left: calc(-1 * var(--espace-s));
+        min-width: 16rem;
+        padding: var(--espace-xs);
+        background: var(--papier);
+        border: var(--trait);
+        border-top: 0;
+        border-radius: 0 0 var(--rayon) var(--rayon);
+    }
+
+    .rayon__lien {
+        padding: .5rem .75rem;
+        color: var(--encre);
+        border-radius: var(--rayon);
+    }
+
+    .rayon__lien:hover {
+        background: var(--jaune);
+        text-decoration: none;
+    }
+
+    .rayon__liste :focus-visible {
+        outline-color: var(--encre);
+    }
+}
+
+
+/* ==========================================================================
+   6. Bandeau démo : une bande jaune fermée par un filet de ticket
+   ========================================================================== */
+.bandeau-demo {
+    max-width: none;
+    padding: .5rem var(--espace-s);
+    background: var(--jaune);
+    color: var(--encre);
+    border-bottom: var(--pointille);
+    font-size: .9375rem;
+    text-align: center;
+}
+
+
+/* ==========================================================================
+   7. Pied de page
+   ========================================================================== */
+.pied {
+    margin-top: var(--espace-xl);
+    padding-top: var(--espace-l);
+    background: var(--encre);
+    color: var(--papier);
+}
+
+.pied a {
+    color: var(--papier);
+}
+
+.pied__grille {
+    display: grid;
+    gap: var(--espace-l);
+}
+
+.pied__nom {
+    font-family: var(--police-titre);
+    font-size: 1.5rem;
+    font-weight: 800;
+}
+
+.pied__titre {
+    margin-bottom: var(--espace-xs);
+    color: var(--jaune);
+    font-family: var(--police-texte);
+    font-size: .875rem;
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.pied__liste > li + li {
+    margin-top: .25rem;
+}
+
+.pied__copyright {
+    max-width: none;
+    margin-top: var(--espace-l);
+    padding: var(--espace-s);
+    border-top: var(--pointille);
+    font-size: .875rem;
+    text-align: center;
+}
+
+@media (min-width: 40rem) {
+    .pied__grille {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 62rem) {
+    .pied__grille {
+        grid-template-columns: 1.4fr repeat(3, 1fr);
+    }
+}
+
+
+/* ==========================================================================
+   8. Utilitaires
+   ========================================================================== */
+
+/* Lien « Aller au contenu » : invisible, il apparaît au premier Tab */
+.lien-evitement {
+    position: absolute;
+    z-index: 100;
+    top: var(--espace-xs);
+    left: var(--espace-xs);
+    padding: .5rem 1rem;
+    background: var(--jaune);
+    color: var(--encre);
+    border: var(--trait);
+    border-radius: var(--rayon);
+    font-weight: 600;
+    transform: translateY(-200%);
+}
+
+.lien-evitement:focus {
+    transform: none;
+}
+
+/* Caché à l'écran, lu par les lecteurs d'écran */
+.visuellement-cache {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
+/* Prix et numéros de commande : la seule utilisation de la police ticket */
+.prix {
+    font-family: var(--police-ticket);
+    white-space: nowrap;
+}
+
+.chapeau {
+    font-size: 1.25rem;
+}
+
+
+/* ==========================================================================
+   9. Composants (les autres arrivent en phase 2)
+   ========================================================================== */
+.bouton {
+    display: inline-block;
+    padding: .75rem 1.25rem;
+    background: var(--sapin);
+    color: var(--papier);
+    border: 2px solid var(--sapin);
+    border-radius: var(--rayon);
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.bouton:hover {
+    background: var(--encre);
+    border-color: var(--encre);
+}
+
+
+/* ==========================================================================
+   10. Pages
+   ========================================================================== */
+
+/* --- Accueil : les rayons numérotés (le chiffre vient d'un compteur CSS) --- */
+.rayons {
+    display: grid;
+    gap: var(--espace-m);
+    counter-reset: rayon;
+}
+
+.rayons__rayon {
+    display: grid;
+    grid-template-columns: 2.5rem 1fr;
+    column-gap: var(--espace-s);
+    max-width: none;
+    padding-top: var(--espace-s);
+    border-top: var(--pointille);
+    counter-increment: rayon;
+}
+
+.rayons__rayon::before {
+    content: counter(rayon);
+    grid-row: span 2;
+    color: var(--sapin);
+    font-family: var(--police-titre);
+    font-size: 3rem;
+    font-weight: 800;
+    line-height: .9;
+}
+
+.rayons__rayon a {
+    color: var(--encre);
+}
+
+@media (min-width: 40rem) {
+    .rayons {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 62rem) {
+    .rayons {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* --- Pages d'erreur (404, 503) ------------------------------------------- */
+.erreur__contenu {
+    text-align: center;
+}
+
+.erreur__contenu > p {
+    margin-inline: auto;
+}
+
+.erreur__code {
+    color: var(--sapin);
+    font-family: var(--police-titre);
+    font-size: clamp(6rem, 28vw, 14rem);
+    font-weight: 800;
+    line-height: .9;
+}
+
+
+/* ==========================================================================
+   11. Animations réduites : respecte le réglage du système
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        transition-duration: .01ms !important;
+        animation-duration: .01ms !important;
+    }
+}
