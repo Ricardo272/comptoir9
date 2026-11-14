@@ -916,6 +916,75 @@ summary.nav__lien:hover,
     }
 }
 
+/* --- Les 3 engagements ----------------------------------------------------- */
+.engagements {
+    display: grid;
+    gap: var(--espace-m);
+}
+
+.engagements__item {
+    max-width: none;
+    padding-left: var(--espace-s);
+    border-left: 4px solid var(--jaune);
+}
+
+@media (min-width: 48rem) {
+    .engagements {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* --- Pages de texte (À propos, Aide, Contact, Mentions légales, CGV) ------- */
+.conteneur--etroit {
+    max-width: 48rem;
+}
+
+.prose h2 {
+    margin-top: var(--espace-l);
+    font-size: 1.5rem;
+}
+
+.prose ul:not([role]) {
+    padding-left: 1.25rem;
+}
+
+.prose li + li {
+    margin-top: .375rem;
+}
+
+.prose__maj {
+    padding-top: var(--espace-s);
+    border-top: var(--pointille);
+    font-size: .875rem;
+}
+
+/* Encadré d'avertissement (« site fictif ») */
+.encadre {
+    padding: var(--espace-s) var(--espace-m);
+    background: var(--jaune);
+    border: var(--trait);
+    border-radius: var(--rayon);
+}
+
+/* Questions fréquentes : une liste de <details> séparés par un filet de ticket */
+.faq__question {
+    padding-block: var(--espace-s);
+    border-top: var(--pointille);
+}
+
+.faq__question:last-child {
+    border-bottom: var(--pointille);
+}
+
+.faq__question summary {
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.faq__question p {
+    margin-top: var(--espace-xs);
+}
+
 /* --- Pages d'erreur (404, 503) ------------------------------------------- */
 .erreur__contenu {
     text-align: center;

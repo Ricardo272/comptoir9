@@ -33,6 +33,17 @@ return [
     'telephone' => '01 99 00 48 84',
     // Le domaine .test est réservé : il ne peut appartenir à personne.
     'email'     => 'contact@comptoir9.test',
+    'horaires_service' => 'du lundi au vendredi, de 9 h à 18 h',
+
+    // Les 3 engagements (accueil et page À propos)
+    'engagements' => [
+        ['titre' => 'Des vendeurs vérifiés',
+         'texte' => 'Chaque boutique est rencontrée avant d\'ouvrir son rayon : pas de vendeur anonyme.'],
+        ['titre' => 'Des prix sans surprise',
+         'texte' => 'Le prix affiché est le prix payé, et les frais de port sont annoncés dès le panier.'],
+        ['titre' => 'Un délai annoncé',
+         'texte' => 'Chaque fiche indique sous combien de jours la boutique expédie le produit.'],
+    ],
 
     // Frais de port, en centimes : un forfait par boutique, offert quand le
     // montant acheté dans cette boutique atteint le seuil.

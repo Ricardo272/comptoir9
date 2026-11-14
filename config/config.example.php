@@ -24,4 +24,9 @@ return [
     // Clé secrète : signe les jetons des formulaires.
     // Une longue chaîne aléatoire : php -r "echo bin2hex(random_bytes(32));"
     'secret' => 'CHANGER_CETTE_CLE',
+
+    // Hébergeur, affiché dans les mentions légales. Il dépend de l'hébergement,
+    // pas du code : laisser null tant que le site n'est pas en ligne.
+    // Exemple : ['nom' => '…', 'adresse' => '…', 'site' => 'https://…']
+    'hebergeur' => null,
 ];

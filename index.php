@@ -62,6 +62,14 @@ $port = $site['frais_port'];
             </div>
         </div>
     </section>
+
+    <section class="section section--filet">
+        <div class="conteneur">
+            <h2>Nos trois engagements</h2>
+<?php require __DIR__ . '/includes/engagements.php'; ?>
+            <p><a href="<?= e(url('a-propos.php')) ?>">L'histoire de Comptoir 9</a></p>
+        </div>
+    </section>
 </main>
 
 <?php require_once __DIR__ . '/includes/footer.php'; ?>
