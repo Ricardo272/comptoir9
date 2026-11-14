@@ -1304,6 +1304,106 @@ summary.nav__lien:hover,
     font-size: .875rem;
 }
 
+/* --- Commande, confirmation, suivi ------------------------------------------- */
+.champ__facultatif,
+.champ__aide {
+    font-size: .875rem;
+    font-weight: 400;
+}
+
+.champ__aide {
+    display: block;
+}
+
+/* Champ en erreur : bordure épaisse et message précédé d'un signe, pas la couleur seule */
+.champ input[aria-invalid="true"] {
+    border-width: 3px;
+}
+
+.champ__erreur {
+    font-size: .9375rem;
+    font-weight: 600;
+}
+
+.champ__erreur::before {
+    content: "⚠ ";
+}
+
+.avis--erreur a {
+    color: var(--papier);
+}
+
+.avis ul {
+    padding-left: 1.25rem;
+}
+
+.formulaire > * + *,
+.commande__formulaire > * + * {
+    margin-top: var(--espace-s);
+}
+
+.formulaire,
+.commande__formulaire {
+    max-width: 32rem;
+}
+
+.commande__formulaire h2 {
+    padding-top: var(--espace-s);
+    font-size: 1.5rem;
+}
+
+.commande__note {
+    font-size: .875rem;
+}
+
+.commande {
+    display: grid;
+    gap: var(--espace-l);
+    align-items: start;
+}
+
+.commande .ticket {
+    margin: 0;
+}
+
+@media (min-width: 62rem) {
+    .commande {
+        grid-template-columns: minmax(0, 1fr) 26rem;
+    }
+}
+
+.ticket--large {
+    max-width: none;
+    margin-left: 0;
+}
+
+.ticket__numero {
+    font-size: 1.25rem;
+}
+
+.ticket__colis {
+    padding-top: var(--espace-s);
+    border-top: var(--pointille);
+}
+
+.ticket__colis > * + * {
+    margin-top: var(--espace-xs);
+}
+
+.ticket__colis h3,
+.ticket__sous-titre {
+    font-family: var(--police-texte);
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.ticket__colis li {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--espace-s);
+    max-width: none;
+}
+
 /* --- Les 3 engagements ----------------------------------------------------- */
 .engagements {
     display: grid;

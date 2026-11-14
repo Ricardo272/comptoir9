@@ -91,8 +91,12 @@ function lireAvis(): array
     return $avis;
 }
 
-/** Les produits visibles parmi ces identifiants, indexés par identifiant. */
-function produitsParId(array $ids): array
+/**
+ * Les produits visibles parmi ces identifiants, indexés par identifiant.
+ * $verrouiller (dans une transaction) : MySQL réserve ces lignes jusqu'à la fin
+ * de la transaction ; une autre commande sur les mêmes produits attend son tour.
+ */
+function produitsParId(array $ids, bool $verrouiller = false): array
 {
     if (!$ids) {
         return [];
@@ -104,7 +108,7 @@ function produitsParId(array $ids): array
          JOIN boutiques b ON b.id = p.boutique_id
          WHERE p.etat = 'en_vente' AND b.etat = 'active'
            AND p.id IN (" . implode(',', array_fill(0, count($ids), '?')) . ')
-         ORDER BY b.id, p.nom'
+         ORDER BY b.id, p.nom' . ($verrouiller ? ' FOR UPDATE' : '')
     );
     $requete->execute(array_values($ids));
     return array_column($requete->fetchAll(), null, 'id');
