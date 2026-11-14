@@ -983,7 +983,8 @@ summary.nav__lien:hover,
 }
 
 .champ input:not([type="checkbox"]),
-.champ select {
+.champ select,
+.champ textarea {
     width: 100%;
     padding: .5rem .625rem;
     background: var(--papier);
@@ -1316,7 +1317,8 @@ summary.nav__lien:hover,
 }
 
 /* Champ en erreur : bordure épaisse et message précédé d'un signe, pas la couleur seule */
-.champ input[aria-invalid="true"] {
+.champ input[aria-invalid="true"],
+.champ textarea[aria-invalid="true"] {
     border-width: 3px;
 }
 
@@ -1402,6 +1404,20 @@ summary.nav__lien:hover,
     justify-content: space-between;
     gap: var(--espace-s);
     max-width: none;
+}
+
+/* Champ piège : hors de l'écran, invisible pour les humains, rempli par les robots */
+.champ-piege {
+    position: absolute;
+    left: -10000px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+}
+
+.champ textarea {
+    display: block;
+    resize: vertical;
 }
 
 /* --- Les 3 engagements ----------------------------------------------------- */

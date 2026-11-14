@@ -4,6 +4,7 @@
  * ticket de confirmation et le suivi. Tout le SQL des commandes est ici.
  */
 require_once __DIR__ . '/panier.php';
+require_once __DIR__ . '/entretien.php';
 
 /**
  * Contrôle les coordonnées saisies. Renvoie [valeurs nettoyées, erreurs par champ].
@@ -137,6 +138,7 @@ function enregistrerCommande(array $coordonnees, array $quantites, int $totalVu,
         }
 
         $pdo->commit();
+        purgerAnciennesDonnees();
         return ['numero' => $numero];
     } catch (Throwable $erreur) {
         if ($pdo->inTransaction()) {

@@ -53,7 +53,7 @@ $hebergeur = configLocale()['hebergeur'] ?? null;
             <p>
                 Une commande recueille votre prénom, votre nom, votre e-mail, votre adresse de livraison
                 et, si vous le souhaitez, votre téléphone. Un message de contact recueille votre nom,
-                votre e-mail et votre message.
+                votre e-mail, le sujet et votre message.
             </p>
             <ul>
                 <li><strong>Pourquoi :</strong> uniquement pour traiter votre commande ou répondre à votre message.</li>
@@ -61,7 +61,7 @@ $hebergeur = configLocale()['hebergeur'] ?? null;
                     (article 6.1.b du RGPD).</li>
                 <li><strong>Qui y a accès :</strong> Comptoir 9 et, pour une commande, les boutiques qui
                     expédient vos produits. Vos données ne sont ni vendues ni transmises à d'autres tiers.
-                    Votre adresse IP n'est pas enregistrée.</li>
+                    Le site n'enregistre pas votre adresse IP avec vos commandes ni avec vos messages.</li>
                 <li><strong>Combien de temps :</strong> trente jours, puis elles sont supprimées automatiquement.</li>
             </ul>
             <p>

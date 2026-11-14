@@ -336,3 +336,6 @@ INSERT INTO produits (boutique_id, rayon_id, slug, nom, description, caracterist
 -- Dates de mise en vente étalées sur 80 jours, dans un ordre mélangé mais
 -- toujours le même : la rubrique « Nouveautés » mêle ainsi tous les rayons.
 UPDATE produits SET cree_le = '2026-11-10 09:00:00' - INTERVAL ((id * 37) % 80) DAY;
+
+-- Stock de départ, que outils/remettre-stocks.php rétablit sur le site de démonstration
+UPDATE produits SET stock_demo = stock;

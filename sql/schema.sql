@@ -8,6 +8,7 @@
 SET NAMES utf8mb4;
 
 -- On supprime d'abord les tables qui dépendent des autres (clés étrangères)
+DROP TABLE IF EXISTS messages;
 DROP TABLE IF EXISTS commande_lignes;
 DROP TABLE IF EXISTS colis;
 DROP TABLE IF EXISTS commandes;
@@ -73,6 +74,7 @@ CREATE TABLE produits (
     prix              INT UNSIGNED       NOT NULL,
     prix_barre        INT UNSIGNED       NULL,
     stock             SMALLINT UNSIGNED  NOT NULL DEFAULT 0,
+    stock_demo        SMALLINT UNSIGNED  NULL,           -- stock de départ, rétabli par outils/remettre-stocks.php
     delai_jours       TINYINT UNSIGNED   NOT NULL,       -- délai d'expédition annoncé
     etat              ENUM('en_vente', 'retire', 'masque') NOT NULL DEFAULT 'en_vente',
     cree_le           DATETIME           NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -149,4 +151,21 @@ CREATE TABLE commande_lignes (
     PRIMARY KEY (id),
     CONSTRAINT lignes_colis FOREIGN KEY (colis_id) REFERENCES colis (id) ON DELETE CASCADE,
     CONSTRAINT lignes_produit FOREIGN KEY (produit_id) REFERENCES produits (id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+-- --------------------------------------------------------------------------
+-- Messages du formulaire de contact
+-- Données personnelles : supprimés automatiquement après 30 jours.
+-- --------------------------------------------------------------------------
+CREATE TABLE messages (
+    id       INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+    nom      VARCHAR(80)   NOT NULL,
+    email    VARCHAR(254)  NOT NULL,
+    sujet    VARCHAR(120)  NOT NULL,
+    message  TEXT          NOT NULL,
+    traite   TINYINT(1)    NOT NULL DEFAULT 0,
+    cree_le  DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY messages_cree_le (cree_le)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
