@@ -3,6 +3,7 @@
 require_once __DIR__ . '/includes/helpers.php';
 require_once __DIR__ . '/includes/donnees/rayons.php';
 require_once __DIR__ . '/includes/donnees/catalogue.php';
+require_once __DIR__ . '/includes/panier.php';
 
 $slug = $_GET['produit'] ?? '';
 $produit = is_string($slug) && $slug !== '' ? produit($slug) : null;
@@ -69,6 +70,23 @@ require_once __DIR__ . '/includes/header.php';
                         <li>Livraison <span class="prix"><?= e(prix($port['par_boutique'])) ?></span>, offerte dès
                             <span class="prix"><?= e(prix($port['offerts_des'])) ?></span> d'achat chez <?= e($produit['boutique']) ?></li>
                     </ul>
+
+<?php if ($produit['stock'] > 0): ?>
+                    <form class="fiche__achat" action="<?= e(url('panier.php')) ?>" method="post">
+                        <input type="hidden" name="action" value="ajouter">
+                        <input type="hidden" name="produit" value="<?= e($produit['slug']) ?>">
+                        <input type="hidden" name="jeton" value="<?= e(creerJeton()) ?>">
+                        <p class="champ champ--court">
+                            <label for="quantite">Quantité</label>
+                            <input id="quantite" type="number" name="quantite" inputmode="numeric" min="1"
+                                   max="<?= min($produit['stock'], QUANTITE_MAX) ?>" value="1" required>
+                        </p>
+                        <button class="bouton bouton--accent" type="submit">Ajouter au panier</button>
+                    </form>
+<?php else: ?>
+                    <!-- Le bouton reste visible mais inactif : on comprend pourquoi on ne peut pas acheter -->
+                    <p><button class="bouton bouton--accent" type="button" disabled>Ajouter au panier</button></p>
+<?php endif; ?>
 
                     <h2 class="fiche__titre">Description</h2>
                     <p><?= e($produit['description']) ?></p>

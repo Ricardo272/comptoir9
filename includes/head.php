@@ -11,6 +11,11 @@
  */
 require_once __DIR__ . '/helpers.php';
 require_once __DIR__ . '/donnees/rayons.php';
+require_once __DIR__ . '/panier.php';
+
+// La session doit s'ouvrir avant tout affichage. Elle ne s'ouvre que si le
+// visiteur a déjà un panier : une simple visite ne dépose aucun cookie.
+$articlesPanier = nombreArticlesPanier();
 
 $pageId          = $pageId ?? '';
 $pageDescription = $pageDescription ?? $site['description'];

@@ -1104,6 +1104,206 @@ summary.nav__lien:hover,
     font-weight: 600;
 }
 
+/* --- Panier ------------------------------------------------------------------ */
+.entete__compteur {
+    display: inline-block;
+    min-width: 1.5em;
+    padding: 0 .35em;
+    background: var(--encre);
+    color: var(--papier);
+    border-radius: 1em;
+    font-size: .875rem;
+    text-align: center;
+}
+
+/* Message après une action (ajout, retrait, quantité corrigée) */
+.avis {
+    padding: var(--espace-xs) var(--espace-s);
+    border: var(--trait);
+    border-left-width: 6px;
+    border-radius: var(--rayon);
+}
+
+.avis--erreur {
+    background: var(--encre);
+    color: var(--papier);
+}
+
+.bouton--petit {
+    padding: .375rem .75rem;
+    font-size: .875rem;
+}
+
+.bouton[disabled] {
+    background: none;
+    color: var(--encre);
+    border-style: dashed;
+    cursor: not-allowed;
+}
+
+/* Bouton qui a l'apparence d'un lien (« Retirer ») */
+.lien-bouton {
+    padding: .25rem 0;
+    background: none;
+    color: var(--sapin);
+    border: 0;
+    text-decoration: underline;
+    text-underline-offset: .2em;
+    cursor: pointer;
+}
+
+.fiche__achat {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    gap: var(--espace-s);
+}
+
+.fiche__achat .champ--court {
+    max-width: 7rem;
+}
+
+/* Un colis = les produits d'une boutique */
+.colis {
+    padding-top: var(--espace-m);
+    border-top: var(--pointille);
+}
+
+.colis > * + * {
+    margin-top: var(--espace-s);
+}
+
+.colis__titre {
+    font-size: 1.25rem;
+}
+
+.colis__titre a {
+    color: var(--encre);
+}
+
+.ligne {
+    display: grid;
+    grid-template-columns: 4.5rem minmax(0, 1fr);
+    gap: var(--espace-xs) var(--espace-s);
+    align-items: start;
+    max-width: none;
+    padding-block: var(--espace-s);
+}
+
+.ligne + .ligne {
+    border-top: 1px solid rgb(22 33 29 / .2);
+}
+
+.ligne__photo {
+    grid-row: span 3;
+    border: var(--trait);
+    border-radius: var(--rayon);
+}
+
+.ligne__nom {
+    font-weight: 600;
+}
+
+.ligne__nom a {
+    color: var(--encre);
+}
+
+.ligne__quantite {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--espace-xs);
+}
+
+.ligne__quantite label {
+    font-size: .875rem;
+    font-weight: 600;
+}
+
+.ligne__quantite input {
+    width: 4.5rem;
+    padding: .375rem .5rem;
+    background: var(--papier);
+    border: var(--trait);
+    border-radius: var(--rayon);
+}
+
+.ligne__total {
+    font-weight: 600;
+}
+
+.ligne__retirer,
+.ligne__total {
+    grid-column: 2;
+}
+
+@media (min-width: 48rem) {
+    .ligne {
+        grid-template-columns: 5rem minmax(0, 1fr) auto 7rem auto;
+        align-items: center;
+    }
+
+    .ligne__photo {
+        grid-row: auto;
+    }
+
+    .ligne__retirer,
+    .ligne__total {
+        grid-column: auto;
+    }
+
+    .ligne__total {
+        text-align: right;
+    }
+}
+
+/* Totaux : libellé à gauche, montant à droite, comme sur un ticket */
+.colis__totaux div,
+.ticket__lignes div {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--espace-s);
+}
+
+.colis__totaux {
+    max-width: 22rem;
+    margin-left: auto;
+}
+
+.colis__astuce {
+    font-size: .875rem;
+}
+
+.ticket {
+    max-width: 26rem;
+    margin-top: var(--espace-l);
+    margin-left: auto;
+    padding: var(--espace-m);
+    border: var(--trait);
+    border-style: dashed;
+    border-radius: var(--rayon);
+}
+
+.ticket > * + * {
+    margin-top: var(--espace-s);
+}
+
+.ticket__titre {
+    font-size: 1.25rem;
+}
+
+.ticket__total {
+    margin-top: var(--espace-xs);
+    padding-top: var(--espace-xs);
+    border-top: var(--pointille);
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+.ticket__note {
+    font-size: .875rem;
+}
+
 /* --- Les 3 engagements ----------------------------------------------------- */
 .engagements {
     display: grid;

@@ -20,7 +20,7 @@
             <button class="recherche__bouton" type="submit">Rechercher</button>
         </form>
 
-        <a class="entete__panier" href="<?= e(url('panier.php')) ?>"<?= $pageId === 'panier' ? ' aria-current="page"' : '' ?>>Panier</a>
+        <a class="entete__panier" href="<?= e(url('panier.php')) ?>"<?= $pageId === 'panier' ? ' aria-current="page"' : '' ?>>Panier<?php if ($articlesPanier > 0): ?> <span class="entete__compteur"><?= $articlesPanier ?><span class="visuellement-cache"> article<?= $articlesPanier > 1 ? 's' : '' ?></span></span><?php endif; ?></a>
     </div>
 
     <div class="conteneur entete__menu">
