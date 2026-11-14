@@ -109,6 +109,33 @@ $cas[] = ['tri prix décroissant',        rechercherProduits(['tri' => 'prix-des
 $cas[] = ['tri inconnu = nouveautés',    array_column(rechercherProduits(['tri' => 'p.id; DROP'])['produits'], 'slug'),
                                          array_column(rechercherProduits([])['produits'], 'slug')];
 
+// --- Fiche produit et fiche boutique ------------------------------------------
+$cocotte = produit('cocotte-fonte-emaillee-24');
+$autres  = autresProduits($cocotte['boutique_id'], $cocotte['id'], 4);
+$cas[] = ['produit : prix et boutique',  [$cocotte['prix'], $cocotte['boutique_slug'], $cocotte['rayon_slug']], [8900, 'la-casserole-bleue', 'cuisson']];
+$cas[] = ['produit : 3 caractéristiques', count(explode("
+", $cocotte['caracteristiques'])), 3];
+$cas[] = ['produit inconnu',             produit('inconnu'), null];
+$cas[] = ['produit : slug vide',         produit(''), null];
+$cas[] = ['4 autres produits',           count($autres), 4];
+$cas[] = ['autres : sans le produit lui-même', in_array($cocotte['slug'], array_column($autres, 'slug'), true), false];
+$cas[] = ['autres : même boutique',      array_unique(array_column($autres, 'boutique')), ['La Casserole Bleue']];
+$braquet = boutique('braquet');
+$cas[] = ['boutique : 14 produits',      (int) $braquet['nb_produits'], 14];
+$cas[] = ['boutique : délai moyen',      (int) $braquet['delai_moyen'], $sql('SELECT ROUND(AVG(delai_jours)) FROM produits WHERE boutique_id = 4')];
+$cas[] = ['boutique inconnue',           boutique('inconnue'), null];
+
+db()->beginTransaction();
+db()->exec("UPDATE boutiques SET etat = 'suspendue' WHERE slug = 'braquet'");
+db()->exec("UPDATE produits SET etat = 'masque' WHERE slug = 'cocotte-fonte-emaillee-24'");
+db()->exec("UPDATE produits SET etat = 'retire' WHERE slug = 'jeu-cordee'");
+$cas[] = ['boutique suspendue : fiche absente',       boutique('braquet'), null];
+$cas[] = ['produit d\x27une boutique suspendue : absent', produit('velo-gravel-braquet-g1'), null];
+$cas[] = ['produit masqué : absent',                  produit('cocotte-fonte-emaillee-24'), null];
+$cas[] = ['produit retiré : absent',                  produit('jeu-cordee'), null];
+db()->rollBack();
+$cas[] = ['produit de retour après le test', produit('jeu-cordee') !== null, true];
+
 // --- Droits de l'utilisateur du site : il ne doit pas pouvoir toucher à la structure
 $refus = function (string $sql): bool {
     try {

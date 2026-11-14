@@ -114,6 +114,7 @@ html {
 }
 
 body {
+    overflow-wrap: break-word; /* un mot trop long passe à la ligne au lieu d'élargir la page */
     min-height: 100vh;
     display: flex;
     flex-direction: column;
@@ -278,6 +279,7 @@ ol[role="list"] {
 }
 
 .recherche {
+    min-width: 0; /* sans cela, le champ impose sa largeur par défaut et élargit la page sous 380 px */
     display: flex;
     flex: 1 1 100%;
     order: 3;
@@ -598,7 +600,7 @@ summary.nav__lien:hover,
 
 @media (min-width: 40rem) {
     .pied__grille {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
 
@@ -754,7 +756,7 @@ summary.nav__lien:hover,
 /* --- Grille de cartes ------------------------------------------------------ */
 .grille {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: var(--espace-m) var(--espace-s);
 }
 
@@ -767,6 +769,11 @@ summary.nav__lien:hover,
         grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
         gap: var(--espace-l) var(--espace-m);
     }
+}
+
+/* Cartes de texte (boutiques) : une colonne sur téléphone, sinon elles sont trop étroites */
+.grille--boutiques {
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr));
 }
 
 /* --- Carte produit --------------------------------------------------------- */
@@ -911,7 +918,7 @@ summary.nav__lien:hover,
 
 @media (min-width: 40rem) {
     .rayons {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
 
@@ -998,7 +1005,7 @@ summary.nav__lien:hover,
 
 .filtres {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: var(--espace-s);
     align-items: end;
     padding: var(--espace-s);
@@ -1026,6 +1033,75 @@ summary.nav__lien:hover,
     .filtres__actions {
         grid-column: auto;
     }
+}
+
+/* --- Fiche produit ----------------------------------------------------------- */
+.fiche {
+    display: grid;
+    gap: var(--espace-m);
+}
+
+.fiche__photo {
+    border: var(--trait);
+    border-radius: var(--rayon);
+    overflow: hidden;
+}
+
+.fiche__photo img {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+}
+
+.fiche__infos > * + * {
+    margin-top: var(--espace-s);
+}
+
+.fiche__nom {
+    font-size: var(--taille-h2);
+}
+
+.fiche__prix .etiquette {
+    font-size: 1.5rem;
+}
+
+.fiche__points > li + li {
+    margin-top: .375rem;
+}
+
+.fiche__titre {
+    padding-top: var(--espace-s);
+    border-top: var(--pointille);
+    font-size: 1.25rem;
+}
+
+.fiche__infos ul:not([role]) {
+    padding-left: 1.25rem;
+}
+
+@media (min-width: 48rem) {
+    .fiche {
+        grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+        gap: var(--espace-l);
+        align-items: start;
+    }
+}
+
+/* --- Fiche boutique : les repères (ville, spécialité, délai…) ---------------- */
+.reperes {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--espace-s);
+    padding-block: var(--espace-s);
+    border-block: var(--pointille);
+}
+
+.reperes dt {
+    font-size: .875rem;
+}
+
+.reperes dd {
+    font-weight: 600;
 }
 
 /* --- Les 3 engagements ----------------------------------------------------- */

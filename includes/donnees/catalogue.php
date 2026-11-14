@@ -154,3 +154,58 @@ function rechercherProduits(array $filtres, int $page = 1): array
 
     return ['total' => $total, 'pages' => $pages, 'page' => $page, 'produits' => $requete->fetchAll()];
 }
+
+/**
+ * Un produit visible, avec sa boutique et le slug de son sous-rayon,
+ * ou null s'il n'existe pas, s'il est retiré ou masqué, ou si sa boutique est suspendue.
+ */
+function produit(string $slug): ?array
+{
+    $requete = db()->prepare(
+        "SELECT p.id, p.slug, p.nom, p.description, p.caracteristiques, p.prix, p.prix_barre,
+                p.stock, p.delai_jours, p.boutique_id,
+                b.nom AS boutique, b.slug AS boutique_slug, b.ville AS boutique_ville,
+                r.slug AS rayon_slug
+         FROM produits p
+         JOIN boutiques b ON b.id = p.boutique_id
+         JOIN rayons r ON r.id = p.rayon_id
+         WHERE p.slug = :slug AND p.etat = 'en_vente' AND b.etat = 'active'"
+    );
+    $requete->execute(['slug' => $slug]);
+    return $requete->fetch() ?: null;
+}
+
+/** D'autres produits de la même boutique, les plus récents d'abord. */
+function autresProduits(int $boutiqueId, int $saufProduitId, int $nombre): array
+{
+    $requete = db()->prepare(
+        SQL_PRODUITS . ' AND p.boutique_id = :boutique AND p.id <> :sauf
+         ORDER BY p.cree_le DESC, p.id DESC LIMIT :nombre'
+    );
+    $requete->bindValue('boutique', $boutiqueId, PDO::PARAM_INT);
+    $requete->bindValue('sauf', $saufProduitId, PDO::PARAM_INT);
+    $requete->bindValue('nombre', $nombre, PDO::PARAM_INT);
+    $requete->execute();
+    return $requete->fetchAll();
+}
+
+/**
+ * Une boutique active avec sa présentation, son nombre de produits en vente
+ * et son délai d'expédition moyen, ou null si elle n'existe pas ou est suspendue.
+ */
+function boutique(string $slug): ?array
+{
+    $requete = db()->prepare(
+        // Sous-requêtes plutôt que GROUP BY : MariaDB (probable chez l'hébergeur) refuse
+        // de sélectionner des colonnes absentes du GROUP BY, là où MySQL 8 l'accepte.
+        "SELECT b.slug, b.nom, b.ville, b.specialite, b.accroche, b.presentation, b.annee_arrivee,
+                (SELECT COUNT(*) FROM produits p
+                  WHERE p.boutique_id = b.id AND p.etat = 'en_vente') AS nb_produits,
+                (SELECT ROUND(AVG(p.delai_jours)) FROM produits p
+                  WHERE p.boutique_id = b.id AND p.etat = 'en_vente') AS delai_moyen
+         FROM boutiques b
+         WHERE b.slug = :slug AND b.etat = 'active'"
+    );
+    $requete->execute(['slug' => $slug]);
+    return $requete->fetch() ?: null;
+}

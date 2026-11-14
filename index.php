@@ -67,7 +67,7 @@ $port = $site['frais_port'];
     <section class="section section--filet">
         <div class="conteneur">
             <h2>Les boutiques</h2>
-            <div class="grille">
+            <div class="grille grille--boutiques">
 <?php foreach (boutiques() as $b): ?>
 <?php require __DIR__ . '/includes/carte-boutique.php'; ?>
 <?php endforeach; ?>
