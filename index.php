@@ -1,5 +1,5 @@
 <?php
-// Accueil — les textes définitifs et les sections manquantes arrivent en phase 3.
+// Accueil
 $pageId = 'accueil';
 
 require_once __DIR__ . '/includes/head.php';
@@ -43,9 +43,21 @@ $port = $site['frais_port'];
 
     <section class="section section--filet">
         <div class="conteneur">
+            <h2>Les bonnes affaires</h2>
+            <div class="grille">
+<?php foreach (produitsBonnesAffaires(4) as $p): ?>
+<?php require __DIR__ . '/includes/carte-produit.php'; ?>
+<?php endforeach; ?>
+            </div>
+            <p><a href="<?= e(urlRayon('bonnes-affaires')) ?>">Toutes les bonnes affaires</a></p>
+        </div>
+    </section>
+
+    <section class="section section--filet">
+        <div class="conteneur">
             <h2>Nouveautés</h2>
             <div class="grille">
-<?php foreach (produitsAccueil() as $p): ?>
+<?php foreach (produitsNouveautes(8) as $p): ?>
 <?php require __DIR__ . '/includes/carte-produit.php'; ?>
 <?php endforeach; ?>
             </div>
@@ -56,7 +68,7 @@ $port = $site['frais_port'];
         <div class="conteneur">
             <h2>Les boutiques</h2>
             <div class="grille">
-<?php foreach (boutiquesAccueil() as $b): ?>
+<?php foreach (boutiques() as $b): ?>
 <?php require __DIR__ . '/includes/carte-boutique.php'; ?>
 <?php endforeach; ?>
             </div>

@@ -860,6 +860,11 @@ summary.nav__lien:hover,
     color: var(--encre);
 }
 
+.carte-boutique__nombre {
+    margin-top: auto;
+    font-size: .875rem;
+}
+
 .carte-boutique__lieu {
     color: var(--sapin);
     font-size: .875rem;
