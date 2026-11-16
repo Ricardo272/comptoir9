@@ -14,3 +14,6 @@ desktop.ini
 CLAUDE.md
 OU-ON-EN-EST.md
 CAHIER-DES-CHARGES.md
+
+# Réglages locaux de l'outil de développement
+.claude/

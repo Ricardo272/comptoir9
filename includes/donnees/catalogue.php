@@ -209,3 +209,9 @@ function boutique(string $slug): ?array
     $requete->execute(['slug' => $slug]);
     return $requete->fetch() ?: null;
 }
+
+/** Les slugs de tous les produits visibles (plan du site). */
+function slugsProduits(): array
+{
+    return db()->query(SQL_PRODUITS . ' ORDER BY p.id')->fetchAll(PDO::FETCH_COLUMN);
+}

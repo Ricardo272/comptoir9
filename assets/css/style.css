@@ -12,6 +12,7 @@
      9. Composants (phase 2)
     10. Pages (accueil, erreurs)
     11. Animations réduites
+    12. Impression
    Écrite « mobile d'abord » : les règles de base visent le téléphone,
    les @media (min-width) ajoutent la mise en page des grands écrans.
    ========================================================================== */
@@ -1516,5 +1517,38 @@ summary.nav__lien:hover,
     *::after {
         transition-duration: .01ms !important;
         animation-duration: .01ms !important;
+    }
+}
+
+
+/* ==========================================================================
+   12. Impression : le ticket de commande sert de reçu, il doit s'imprimer
+   proprement. On retire ce qui ne sert qu'à l'écran.
+   ========================================================================== */
+@media print {
+    .entete,
+    .bandeau-demo,
+    .pied,
+    .lien-evitement,
+    .fil-ariane,
+    .groupe-boutons,
+    .filtres,
+    .pagination {
+        display: none;
+    }
+
+    body {
+        background: #fff;
+        color: #000;
+    }
+
+    .section {
+        padding-block: 0;
+    }
+
+    /* Un colis ne se coupe pas entre deux pages */
+    .ticket__colis,
+    .colis {
+        break-inside: avoid;
     }
 }

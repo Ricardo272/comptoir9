@@ -62,6 +62,14 @@ $cas[] = ['image dimensions',     str_contains($img, 'width="600" height="400"')
 $cas[] = ['image classe',         str_contains($img, 'class="image-remplacement"'), true];
 $cas[] = ['image paresseuse',     str_contains($img, 'loading="lazy"'), true];
 
+// jsonLd() : un texte piégé ne peut pas fermer la balise <script>
+$fiche = jsonLd(['@type' => 'Product', 'name' => 'Piège </script><b>"gras"</b> à 12 €']);
+$json = substr($fiche, strlen('<script type="application/ld+json">'), -strlen('</script>'));
+$cas[] = ['jsonLd : une seule balise fermante', substr_count($fiche, '</script>'), 1];
+$cas[] = ['jsonLd : aucune balise dans le JSON', (bool) preg_match('/[<>]/', $json), false];
+$cas[] = ['jsonLd : JSON relu à l\'identique',  json_decode($json, true)['name'] ?? null, 'Piège </script><b>"gras"</b> à 12 €'];
+$cas[] = ['jsonLd : contexte schema.org',       json_decode($json, true)['@context'] ?? null, 'https://schema.org'];
+
 foreach ($cas as [$nom, $obtenu, $attendu]) {
     if (!verifier($nom, $obtenu, $attendu)) {
         $echecs++;

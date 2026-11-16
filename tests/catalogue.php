@@ -72,8 +72,10 @@ db()->exec("UPDATE produits SET etat = 'retire' WHERE slug = 'cable-usb-c-tresse
 db()->exec("UPDATE produits SET etat = 'masque' WHERE slug = 'jeu-cordee'");
 $cas[] = ['suspendue, retiré, masqué : 64 visibles', count(produitsNouveautes(200)), 64];
 $cas[] = ['boutique suspendue absente',              count(boutiques()), 4];
+$cas[] = ['plan du site : 64 produits seulement',     count(slugsProduits()), 64];
 db()->rollBack();
 $cas[] = ['base intacte après le test', count(produitsNouveautes(200)), 80];
+$cas[] = ['plan du site : 80 produits',  count(slugsProduits()), 80];
 
 // --- Recherche, filtres, tri, pagination ---------------------------------------
 $total = fn (array $filtres) => rechercherProduits($filtres)['total'];

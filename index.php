@@ -2,6 +2,25 @@
 // Accueil
 $pageId = 'accueil';
 
+require_once __DIR__ . '/includes/helpers.php';
+$pageJsonLd = [
+    '@type'       => 'Organization',
+    'name'        => $site['nom'],
+    'slogan'      => $site['slogan'],
+    'description' => $site['description'],
+    'url'         => urlAbsolue(),
+    'logo'        => urlAbsolue('favicon.svg'),
+    'email'       => $site['email'],
+    'telephone'   => lienTelephone($site['telephone']),
+    'address'     => [
+        '@type'           => 'PostalAddress',
+        'streetAddress'   => $site['adresse']['rue'],
+        'postalCode'      => $site['adresse']['code_postal'],
+        'addressLocality' => $site['adresse']['ville'],
+        'addressCountry'  => 'FR',
+    ],
+];
+
 require_once __DIR__ . '/includes/head.php';
 require_once __DIR__ . '/includes/header.php';
 require_once __DIR__ . '/includes/donnees/catalogue.php';

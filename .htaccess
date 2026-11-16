@@ -78,4 +78,9 @@ RedirectMatch 404 ^/(includes|config|sql|outils|tests)(/|$)
     RewriteCond %{HTTP:X-Forwarded-Proto} !https
     RewriteCond %{HTTP_HOST} !\.test$ [NC]
     RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+
+    # Le plan du site et les consignes aux robots sont fabriqués par PHP (base et
+    # adresse du site à jour), mais gardent leurs adresses habituelles.
+    RewriteRule ^sitemap\.xml$ sitemap.php [L]
+    RewriteRule ^robots\.txt$ robots.php [L]
 </IfModule>

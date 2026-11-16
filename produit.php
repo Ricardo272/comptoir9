@@ -30,6 +30,20 @@ $pageId          = 'produit';
 $pageTitle       = $produit['nom'];
 $pageDescription = $produit['description'] . ' Vendu par ' . $produit['boutique'] . ' sur Comptoir 9.';
 $pageCanonique   = 'produit.php?produit=' . rawurlencode($produit['slug']);
+$pageJsonLd = [
+    '@type'       => 'Product',
+    'name'        => $produit['nom'],
+    'description' => $produit['description'],
+    'sku'         => $produit['slug'],
+    'offers'      => [
+        '@type'         => 'Offer',
+        'url'           => urlAbsolue($pageCanonique),
+        'price'         => number_format($produit['prix'] / 100, 2, '.', ''), // « 79.90 » : point décimal exigé
+        'priceCurrency' => 'EUR',
+        'availability'  => 'https://schema.org/' . ($produit['stock'] > 0 ? 'InStock' : 'OutOfStock'),
+        'seller'        => ['@type' => 'Organization', 'name' => $produit['boutique']],
+    ],
+];
 
 require_once __DIR__ . '/includes/head.php';
 require_once __DIR__ . '/includes/header.php';

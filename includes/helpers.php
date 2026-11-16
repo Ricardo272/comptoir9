@@ -185,3 +185,17 @@ function imageRemplacement(string $chemin, int $largeur, int $hauteur): string
 
     return 'data:image/svg+xml,' . rawurlencode($svg);
 }
+
+/**
+ * Données structurées schema.org, au format JSON-LD : une fiche que Google lit
+ * pour décrire la page (produit, prix, fil d'Ariane…).
+ * JSON_HEX_TAG écrit < et > sous forme de codes : un texte venu de la base ne
+ * peut pas fermer la balise <script> et injecter du HTML.
+ */
+function jsonLd(array $donnees): string
+{
+    return '<script type="application/ld+json">'
+         . json_encode(['@context' => 'https://schema.org'] + $donnees,
+               JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_THROW_ON_ERROR)
+         . '</script>';
+}

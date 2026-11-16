@@ -92,6 +92,50 @@ verifier('pas de liste de fichiers dans /assets/', requete($base . '/assets/')['
 verifier('produit inconnu : 404', requete($base . '/produit.php?produit=inconnu')['code'] === 404);
 verifier('rayon inconnu : 404', requete($base . '/catalogue.php?rayon=inconnu')['code'] === 404);
 
+echo "Référencement : robots.txt, plan du site, données structurées\n";
+$robots = requete($base . '/robots.txt');
+verifier('robots.txt : panier et commande exclus, plan du site indiqué', $robots['code'] === 200
+    && str_contains($robots['corps'], 'Disallow: /panier.php') && str_contains($robots['corps'], "Sitemap: $base/sitemap.xml"));
+$plan = requete($base . '/sitemap.xml');
+preg_match_all('{<loc>([^<]+)</loc>}', $plan['corps'], $m);
+$adresses = array_map('html_entity_decode', $m[1]);
+$produitsEnVente = $compter("produits p JOIN boutiques b ON b.id = p.boutique_id", "p.etat = 'en_vente' AND b.etat = 'active'");
+verifier('sitemap.xml : XML valide, toutes les fiches produit', @simplexml_load_string($plan['corps']) !== false
+    && count(preg_grep('/produit\.php/', $adresses)) === $produitsEnVente);
+
+// Chaque adresse du plan : 200, aucune erreur PHP, données structurées lisibles
+$defauts = [];
+$fichesProduit = 0;
+foreach ($adresses as $adresse) {
+    $r = requete($adresse);
+    if ($r['code'] !== 200 || preg_match('/Warning|Notice|Deprecated|Fatal error/', $r['corps'])) {
+        $defauts[] = "$adresse (code {$r['code']})";
+        continue;
+    }
+    preg_match_all('{<script type="application/ld\+json">(.*?)</script>}s', $r['corps'], $blocs);
+    foreach ($blocs[1] as $bloc) {
+        $fiche = json_decode($bloc, true);
+        if (!is_array($fiche) || ($fiche['@context'] ?? '') !== 'https://schema.org') {
+            $defauts[] = "$adresse (JSON-LD illisible)";
+        } elseif ($fiche['@type'] === 'Product') {
+            // Le prix annoncé à Google doit être celui de la base, avec un point décimal
+            $prix = db()->prepare('SELECT prix FROM produits WHERE slug = ?');
+            $prix->execute([$fiche['sku']]);
+            if ($fiche['offers']['price'] !== number_format($prix->fetchColumn() / 100, 2, '.', '')
+                || $fiche['offers']['priceCurrency'] !== 'EUR') {
+                $defauts[] = "$adresse (prix de la fiche)";
+            }
+            $fichesProduit++;
+        }
+    }
+}
+verifier(count($adresses) . ' adresses du plan : 200, sans erreur, fiches lisibles' . ($defauts ? ' — ' . implode(', ', array_slice($defauts, 0, 3)) : ''), !$defauts);
+verifier("fiche Product avec le bon prix sur les $produitsEnVente produits", $fichesProduit === $produitsEnVente);
+$accueilFiche = str_contains($accueil['corps'], '"@type":"Organization"');
+$partage = requete($base . '/assets/img/partage.jpg');
+verifier('accueil : fiche Organization et image de partage en ligne', $accueilFiche
+    && str_contains($accueil['corps'], 'property="og:image"') && $partage['code'] === 200);
+
 echo "Catalogue : saisies piégées\n";
 $xss = requete($base . '/catalogue.php?q=' . rawurlencode('<script>alert(1)</script>'));
 verifier('balise script dans la recherche : échappée', $xss['code'] === 200 && !str_contains($xss['corps'], '<script>alert(1)</script>'));
