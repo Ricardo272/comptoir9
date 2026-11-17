@@ -194,3 +194,46 @@
 .formulaire select {
     width: 100%;
 }
+
+/* --- Modération des produits : une ligne par produit --------------------- */
+.moderation {
+    padding-top: var(--espace-m);
+}
+
+.moderation h2 {
+    font-size: 1.5rem;
+}
+
+.liste-moderation {
+    margin-top: var(--espace-xs);
+    background: #fff;
+    border: var(--trait);
+    border-radius: var(--rayon);
+}
+
+.liste-moderation__ligne {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: .25rem var(--espace-s);
+    max-width: none;
+    padding: .5rem var(--espace-s);
+}
+
+.liste-moderation__ligne + .liste-moderation__ligne {
+    border-top: 1px solid rgb(22 33 29 / .2);
+}
+
+.liste-moderation__nom {
+    min-width: 0;
+}
+
+.liste-moderation__ligne--masque .liste-moderation__nom {
+    text-decoration: line-through;
+}
+
+/* La pastille d'état ne se coupe pas en deux à la fin d'une ligne */
+.liste-moderation .pastille {
+    white-space: nowrap;
+}

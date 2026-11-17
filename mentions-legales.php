@@ -60,7 +60,9 @@ $hebergeur = configLocale()['hebergeur'] ?? null;
                 <li><strong>Sur quelle base :</strong> l'exécution de votre commande ou de votre demande
                     (article 6.1.b du RGPD).</li>
                 <li><strong>Qui y a accès :</strong> Comptoir 9 et, pour une commande, les boutiques qui
-                    expédient vos produits. Vos données ne sont ni vendues ni transmises à d'autres tiers.
+                    expédient vos produits : chacune voit seulement ses propres colis, avec le nom, l'adresse
+                    de livraison et le téléphone, sans votre e-mail. Vos données ne sont ni vendues ni
+                    transmises à d'autres tiers.
                     Le site n'enregistre pas votre adresse IP avec vos commandes ni avec vos messages.</li>
                 <li><strong>Combien de temps :</strong> trente jours, puis elles sont supprimées automatiquement.</li>
             </ul>

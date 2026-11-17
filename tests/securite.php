@@ -463,5 +463,67 @@ verifier('base remise en état : produit, stocks, comptes, commande',
     && db()->query("SELECT id, stock FROM produits WHERE id IN ($kit, $cable, $jeu)")->fetchAll(PDO::FETCH_KEY_PAIR) == $stocksAvant
     && !(int) $valeur("SELECT COUNT(*) FROM comptes WHERE identifiant LIKE 'test-vendeur-%'")
     && !(int) $valeur("SELECT COUNT(*) FROM produits WHERE nom LIKE '%test-sécurité%'"));
+echo "Outils de l'admin : suspendre une boutique, masquer un produit\n";
+$mdpModo    = bin2hex(random_bytes(12));
+$mdpVendeur = bin2hex(random_bytes(12));
+db()->exec("DELETE FROM comptes WHERE identifiant LIKE 'test-moderation-%'");
+$creer->execute(['test-moderation-admin', password_hash($mdpModo, PASSWORD_DEFAULT), 'admin', null]);
+$creer->execute(['test-moderation-braquet', password_hash($mdpVendeur, PASSWORD_DEFAULT), 'vendeur', $idBoutique('braquet')]);
+$braquetId = $idBoutique('braquet');
+$gravel = 'velo-gravel-braquet-g1';
+
+try {
+    foreach (['/admin/boutiques.php', '/admin/moderation.php'] as $page) {
+        verifier("$page sans connexion : renvoie vers la connexion",
+            str_ends_with(requete($base . $page)['entetes']['location'] ?? '', '/admin/connexion.php'));
+    }
+    [, $modo] = seConnecter($base, 'test-moderation-admin', $mdpModo);
+    [, $vendeurBraquet] = seConnecter($base, 'test-moderation-braquet', $mdpVendeur);
+    verifier('vendeur : Boutiques et Produits (modération) refusées (403)',
+        requete("$base/admin/boutiques.php", null, $vendeurBraquet)['code'] === 403
+        && requete("$base/admin/moderation.php", null, $vendeurBraquet)['code'] === 403);
+    $pages = [requete("$base/admin/boutiques.php", null, $modo), requete("$base/admin/moderation.php", null, $modo)];
+    verifier('admin : Boutiques (5) et Produits (80) affichées, sans erreur PHP',
+        $pages[0]['code'] === 200 && substr_count($pages[0]['corps'], '<li class="carte-admin') === 5
+        && $pages[1]['code'] === 200 && substr_count($pages[1]['corps'], '<li class="liste-moderation__ligne') === 80
+        && !preg_match('/Warning|Notice|Deprecated|Fatal error/', $pages[0]['corps'] . $pages[1]['corps']));
+    $csrfModo = csrfDe("$base/admin/boutiques.php", $modo);
+
+    // --- Suspendre une boutique ------------------------------------------------
+    verifier('suspendre sans jeton CSRF : refusé (400)',
+        requete("$base/admin/boutiques.php", ['boutique' => $braquetId, 'active' => '0'], $modo)['code'] === 400);
+    verifier('vendeur : suspendre une boutique refusé (403), rien ne change',
+        requete("$base/admin/boutiques.php", ['csrf' => csrfDe("$base/admin/colis.php", $vendeurBraquet), 'boutique' => $braquetId, 'active' => '0'], $vendeurBraquet)['code'] === 403
+        && $valeur("SELECT etat FROM boutiques WHERE id = $braquetId") === 'active');
+    requete("$base/admin/boutiques.php", ['csrf' => $csrfModo, 'boutique' => $braquetId, 'active' => '0'], $modo);
+    verifier('boutique suspendue : sa fiche, ses produits et son filtre disparaissent du site',
+        $valeur("SELECT etat FROM boutiques WHERE id = $braquetId") === 'suspendue'
+        && requete("$base/boutique.php?boutique=braquet")['code'] === 404
+        && requete("$base/produit.php?produit=$gravel")['code'] === 404
+        && requete("$base/catalogue.php?boutique=braquet")['code'] === 404
+        && !str_contains(requete("$base/sitemap.xml")['corps'], $gravel));
+    verifier('boutique suspendue : son vendeur garde l\'accès à son espace',
+        requete("$base/admin/produits.php", null, $vendeurBraquet)['code'] === 200);
+    requete("$base/admin/boutiques.php", ['csrf' => $csrfModo, 'boutique' => $braquetId, 'active' => '1'], $modo);
+    verifier('boutique réactivée : de nouveau en ligne',
+        requete("$base/boutique.php?boutique=braquet")['code'] === 200 && requete("$base/produit.php?produit=$gravel")['code'] === 200);
+
+    // --- Masquer un produit -----------------------------------------------------
+    $idGravel = $idProduit($gravel);
+    requete("$base/admin/moderation.php", ['csrf' => $csrfModo, 'produit' => $idGravel, 'masquer' => '1', 'ancre' => 'b3'], $modo);
+    verifier('produit masqué : sa fiche publique répond 404',
+        $valeur("SELECT etat FROM produits WHERE id = $idGravel") === 'masque' && requete("$base/produit.php?produit=$gravel")['code'] === 404);
+    verifier('produit masqué : sa boutique le voit « masqué », sans bouton pour le remettre',
+        str_contains(requete("$base/admin/produits.php", null, $vendeurBraquet)['corps'], 'Masqué par l&#039;administration'));
+    $r = requete("$base/admin/moderation.php", ['csrf' => $csrfModo, 'produit' => $idGravel, 'masquer' => '1', 'ancre' => '"><script>'], $modo);
+    verifier('ancre piégée dans la redirection : ignorée', !str_contains($r['entetes']['location'] ?? '', 'script'));
+    requete("$base/admin/moderation.php", ['csrf' => $csrfModo, 'produit' => $idGravel, 'masquer' => '0'], $modo);
+    verifier('produit démasqué : de nouveau en vente',
+        $valeur("SELECT etat FROM produits WHERE id = $idGravel") === 'en_vente' && requete("$base/produit.php?produit=$gravel")['code'] === 200);
+} finally {
+    db()->exec("UPDATE boutiques SET etat = 'active' WHERE id = $braquetId");
+    db()->exec("UPDATE produits SET etat = 'en_vente' WHERE slug = '$gravel'");
+    db()->exec("DELETE FROM comptes WHERE identifiant LIKE 'test-moderation-%'");
+}
 echo "\n" . ($echecs === 0 ? 'Tout passe.' : "$echecs échec(s).") . "\n";
 exit($echecs === 0 ? 0 : 1);

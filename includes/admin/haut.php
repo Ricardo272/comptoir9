@@ -14,6 +14,8 @@ $liensAdmin = match ($compte['role'] ?? null) {
     'admin'   => [
         'commandes' => ['Commandes', 'admin/commandes.php'],
         'messages'  => ['Messages',  'admin/messages.php'],
+        'boutiques' => ['Boutiques', 'admin/boutiques.php'],
+        'moderation' => ['Produits', 'admin/moderation.php'],
     ],
     'vendeur' => [
         'colis'    => ['Mes colis',    'admin/colis.php'],

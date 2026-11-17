@@ -50,3 +50,58 @@ function marquerMessage(int $id, bool $traite): bool
     return $requete->rowCount() > 0
         || (bool) db()->query('SELECT 1 FROM messages WHERE id = ' . $id)->fetchColumn();
 }
+
+/** Les boutiques, avec leurs nombres de produits et de comptes vendeurs. */
+function listeBoutiques(): array
+{
+    return db()->query(
+        "SELECT b.id, b.slug, b.nom, b.ville, b.etat,
+                (SELECT COUNT(*) FROM produits p WHERE p.boutique_id = b.id AND p.etat = 'en_vente') AS en_vente,
+                (SELECT COUNT(*) FROM produits p WHERE p.boutique_id = b.id) AS produits,
+                (SELECT COUNT(*) FROM comptes c WHERE c.boutique_id = b.id) AS comptes
+         FROM boutiques b
+         ORDER BY b.id"
+    )->fetchAll();
+}
+
+/**
+ * Suspend ou réactive une boutique. Suspendue, elle disparaît du site avec tous
+ * ses produits (règle de visibilité de includes/donnees/catalogue.php) ; ses
+ * produits et ses commandes restent en base. Renvoie false si rien n'a changé.
+ */
+function changerEtatBoutique(int $boutiqueId, bool $active): bool
+{
+    $requete = db()->prepare('UPDATE boutiques SET etat = :nouvel WHERE id = :id AND etat = :ancien');
+    $requete->execute([
+        'nouvel' => $active ? 'active' : 'suspendue',
+        'ancien' => $active ? 'suspendue' : 'active',
+        'id'     => $boutiqueId,
+    ]);
+    return $requete->rowCount() === 1;
+}
+
+/** Tous les produits, par boutique, pour la modération. */
+function listeProduitsModeration(): array
+{
+    return db()->query(
+        'SELECT p.id, p.slug, p.nom, p.prix, p.stock, p.etat, b.nom AS boutique, b.etat AS etat_boutique
+         FROM produits p JOIN boutiques b ON b.id = p.boutique_id
+         ORDER BY b.id, p.nom'
+    )->fetchAll();
+}
+
+/**
+ * Masque un produit (modération), ou le démasque. Démasqué, il revient en vente.
+ * Un produit retiré par sa boutique peut aussi être masqué : le vendeur ne pourra
+ * plus le remettre en vente. Renvoie false si rien n'a changé.
+ */
+function masquerProduit(int $produitId, bool $masquer): bool
+{
+    $requete = db()->prepare(
+        $masquer
+            ? "UPDATE produits SET etat = 'masque' WHERE id = :id AND etat <> 'masque'"
+            : "UPDATE produits SET etat = 'en_vente' WHERE id = :id AND etat = 'masque'"
+    );
+    $requete->execute(['id' => $produitId]);
+    return $requete->rowCount() === 1;
+}
