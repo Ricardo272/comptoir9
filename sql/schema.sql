@@ -8,6 +8,7 @@
 SET NAMES utf8mb4;
 
 -- On supprime d'abord les tables qui dépendent des autres (clés étrangères)
+DROP TABLE IF EXISTS comptes;
 DROP TABLE IF EXISTS messages;
 DROP TABLE IF EXISTS commande_lignes;
 DROP TABLE IF EXISTS colis;
@@ -168,4 +169,26 @@ CREATE TABLE messages (
     cree_le  DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     KEY messages_cree_le (cree_le)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+-- --------------------------------------------------------------------------
+-- Comptes de l'espace de gestion (/admin/), créés par outils/creer-compte.php.
+-- role 'admin'   : tout le site, sans boutique.
+-- role 'vendeur' : sa seule boutique (boutique_id), jamais celles des autres.
+-- echecs, bloque_jusqua : blocage après 5 mauvais mots de passe d'affilée.
+-- --------------------------------------------------------------------------
+CREATE TABLE comptes (
+    id             SMALLINT UNSIGNED  NOT NULL AUTO_INCREMENT,
+    identifiant    VARCHAR(40)        NOT NULL,
+    mot_de_passe   VARCHAR(255)       NOT NULL,          -- empreinte password_hash(), jamais en clair
+    role           ENUM('admin', 'vendeur') NOT NULL,
+    boutique_id    SMALLINT UNSIGNED  NULL,
+    echecs         TINYINT UNSIGNED   NOT NULL DEFAULT 0,
+    bloque_jusqua  DATETIME           NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY comptes_identifiant (identifiant),
+    CONSTRAINT comptes_boutique FOREIGN KEY (boutique_id) REFERENCES boutiques (id),
+    -- Un admin n'a pas de boutique ; un vendeur en a toujours une
+    CONSTRAINT comptes_role CHECK ((role = 'admin' AND boutique_id IS NULL) OR (role = 'vendeur' AND boutique_id IS NOT NULL))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

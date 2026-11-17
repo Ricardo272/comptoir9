@@ -235,5 +235,117 @@ try {
 }
 verifier('messages du test supprimés', $nos() === 0);
 
+echo "Espace de gestion\n";
+foreach (['/admin/', '/admin/commandes.php', '/admin/messages.php'] as $page) {
+    verifier("$page sans connexion : renvoie vers la connexion",
+        str_ends_with(requete($base . $page)['entetes']['location'] ?? '', '/admin/connexion.php'));
+}
+
+/** Ouvre la page de connexion : retourne [en-tête Cookie, jeton CSRF, Set-Cookie brut]. */
+function pageConnexion(string $base): array
+{
+    $r = requete($base . '/admin/connexion.php');
+    preg_match('/name="csrf" value="([0-9a-f]+)"/', $r['corps'], $m);
+    $setCookie = $r['entetes']['set-cookie'] ?? '';
+    return ['Cookie: ' . explode(';', $setCookie)[0] . "\r\n", $m[1] ?? '', $setCookie];
+}
+
+/** Se connecte : retourne l'en-tête Cookie de la session connectée, ou '' si refusé. */
+function seConnecter(string $base, string $identifiant, string $motDePasse): array
+{
+    [$cookie, $csrf] = pageConnexion($base);
+    $r = requete($base . '/admin/connexion.php', ['csrf' => $csrf, 'identifiant' => $identifiant, 'mot_de_passe' => $motDePasse], $cookie);
+    $nouveau = isset($r['entetes']['set-cookie']) ? 'Cookie: ' . explode(';', $r['entetes']['set-cookie'])[0] . "\r\n" : '';
+    return [$r, $nouveau, $cookie];
+}
+
+/** Le jeton CSRF d'une page de la session connectée. */
+function csrfDe(string $adresse, string $cookie): string
+{
+    preg_match('/name="csrf" value="([0-9a-f]+)"/', requete($adresse, null, $cookie)['corps'], $m);
+    return $m[1] ?? '';
+}
+
+[$cookie, $csrf, $setCookie] = pageConnexion($base);
+verifier('cookie limité à /admin/, HttpOnly, SameSite=Strict',
+    stripos($setCookie, 'path=/admin/') !== false && stripos($setCookie, 'httponly') !== false
+    && stripos($setCookie, 'samesite=strict') !== false);
+verifier('connexion sans jeton CSRF : refusée (400)',
+    requete($base . '/admin/connexion.php', ['identifiant' => 'x', 'mot_de_passe' => 'y'], $cookie)['code'] === 400);
+
+// Comptes jetables, mots de passe aléatoires jamais affichés
+$mdpAdmin   = bin2hex(random_bytes(12));
+$mdpVendeur = bin2hex(random_bytes(12));
+$creer = db()->prepare('INSERT INTO comptes (identifiant, mot_de_passe, role, boutique_id) VALUES (?, ?, ?, ?)');
+db()->exec("DELETE FROM comptes WHERE identifiant IN ('test-securite-admin', 'test-securite-vendeur')");
+$creer->execute(['test-securite-admin', password_hash($mdpAdmin, PASSWORD_DEFAULT), 'admin', null]);
+$creer->execute(['test-securite-vendeur', password_hash($mdpVendeur, PASSWORD_DEFAULT), 'vendeur',
+    (int) db()->query("SELECT id FROM boutiques WHERE slug = 'braquet'")->fetchColumn()]);
+$idMessage = null;
+
+try {
+    // --- Admin -----------------------------------------------------------------
+    [$connexion, $admin, $avant] = seConnecter($base, 'test-securite-admin', $mdpAdmin);
+    verifier('bonne connexion : redirection vers l\'espace', str_ends_with($connexion['entetes']['location'] ?? '', '/admin/'));
+    verifier('nouvel identifiant de session après connexion', $admin !== '' && $admin !== $avant);
+    verifier('admin : arrive sur les commandes', str_ends_with(requete($base . '/admin/', null, $admin)['entetes']['location'] ?? '', '/admin/commandes.php'));
+    $pageCommandes = requete($base . '/admin/commandes.php', null, $admin);
+    verifier('admin : commandes et messages accessibles, sans erreur PHP',
+        $pageCommandes['code'] === 200 && requete($base . '/admin/messages.php', null, $admin)['code'] === 200
+        && !preg_match('/Warning|Notice|Deprecated|Fatal error/', $pageCommandes['corps']));
+    verifier('commande inconnue : 404', requete($base . '/admin/commandes.php?numero=C9-ZZZZZZ', null, $admin)['code'] === 404);
+    verifier('numéro piégé : 404, sans erreur', requete($base . '/admin/commandes.php?numero=' . rawurlencode("' OR 1=1"), null, $admin)['code'] === 404);
+
+    db()->exec("INSERT INTO messages (nom, email, sujet, message) VALUES ('Test', 'test@exemple.test', 'test-securite-admin', '<script>alert(1)</script>')");
+    $idMessage = (int) db()->lastInsertId();
+    $pageMessages = requete($base . '/admin/messages.php', null, $admin)['corps'];
+    verifier('message affiché échappé dans l\'administration', str_contains($pageMessages, 'test-securite-admin')
+        && !str_contains($pageMessages, '<script>alert(1)</script>'));
+    verifier('marquer un message sans jeton CSRF : refusé (400)',
+        requete($base . '/admin/messages.php', ['id' => $idMessage, 'traite' => '1'], $admin)['code'] === 400);
+    $r = requete($base . '/admin/messages.php', ['csrf' => csrfDe($base . '/admin/messages.php', $admin), 'id' => $idMessage, 'traite' => '1'], $admin);
+    verifier('marquer un message avec le jeton : enregistré',
+        $r['code'] === 303 && (int) db()->query("SELECT traite FROM messages WHERE id = $idMessage")->fetchColumn() === 1);
+
+    $csrfAdmin = csrfDe($base . '/admin/commandes.php', $admin);
+    verifier('déconnexion sans jeton CSRF : refusée (400)', requete($base . '/admin/deconnexion.php', [], $admin)['code'] === 400);
+    requete($base . '/admin/deconnexion.php', ['csrf' => $csrfAdmin], $admin);
+    verifier('après déconnexion : l\'ancienne session ne vaut plus rien',
+        str_ends_with(requete($base . '/admin/commandes.php', null, $admin)['entetes']['location'] ?? '', '/admin/connexion.php'));
+
+    // --- Vendeur ---------------------------------------------------------------
+    [, $vendeur] = seConnecter($base, 'test-securite-vendeur', $mdpVendeur);
+    verifier('vendeur : arrive sur ses colis', str_ends_with(requete($base . '/admin/', null, $vendeur)['entetes']['location'] ?? '', '/admin/colis.php'));
+    foreach (['/admin/commandes.php', '/admin/messages.php'] as $page) {
+        $r = requete($base . $page, null, $vendeur);
+        verifier("vendeur : $page refusée (403)", $r['code'] === 403 && !str_contains($r['corps'], 'test@exemple.test'));
+    }
+    verifier('vendeur : marquer un message refusé (403)',
+        requete($base . '/admin/messages.php', ['csrf' => csrfDe($base . '/admin/commandes.php', $vendeur), 'id' => $idMessage, 'traite' => '0'], $vendeur)['code'] === 403
+        && (int) db()->query("SELECT traite FROM messages WHERE id = $idMessage")->fetchColumn() === 1);
+    db()->exec("DELETE FROM comptes WHERE identifiant = 'test-securite-vendeur'");
+    verifier('compte supprimé : sa session tombe aussitôt',
+        str_ends_with(requete($base . '/admin/commandes.php', null, $vendeur)['entetes']['location'] ?? '', '/admin/connexion.php'));
+
+    // --- Mots de passe ---------------------------------------------------------
+    $corps = '';
+    for ($i = 1; $i <= 5; $i++) {
+        $corps = seConnecter($base, 'test-securite-admin', 'faux-' . $i)[0]['corps'];
+    }
+    verifier('5 échecs : compte bloqué', str_contains($corps, 'Trop de tentatives'));
+    verifier('bloqué : même le bon mot de passe est refusé',
+        str_contains(seConnecter($base, 'test-securite-admin', $mdpAdmin)[0]['corps'], 'Trop de tentatives'));
+    verifier('identifiant inconnu : même message qu\'un mauvais mot de passe',
+        str_contains(seConnecter($base, 'inconnu-' . bin2hex(random_bytes(4)), 'x')[0]['corps'], 'Identifiant ou mot de passe incorrect'));
+    verifier('mots de passe enregistrés sous forme d\'empreinte',
+        !(int) db()->query("SELECT COUNT(*) FROM comptes WHERE mot_de_passe NOT LIKE '$2y$%'")->fetchColumn());
+} finally {
+    db()->exec("DELETE FROM comptes WHERE identifiant IN ('test-securite-admin', 'test-securite-vendeur')");
+    if ($idMessage) {
+        db()->exec("DELETE FROM messages WHERE id = $idMessage");
+    }
+}
+verifier('comptes et message du test supprimés',
+    !(int) db()->query("SELECT COUNT(*) FROM comptes WHERE identifiant LIKE 'test-securite-%'")->fetchColumn());
 echo "\n" . ($echecs === 0 ? 'Tout passe.' : "$echecs échec(s).") . "\n";
 exit($echecs === 0 ? 0 : 1);

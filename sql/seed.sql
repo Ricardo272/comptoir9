@@ -1,13 +1,15 @@
 -- ==========================================================================
 -- Données de départ de Comptoir 9 : rayons, boutiques, 80 produits.
 -- À exécuter dans la base comptoir9, UNE SEULE FOIS, après schema.sql.
--- ATTENTION : efface les rayons, les boutiques, les produits ET LES COMMANDES.
+-- ATTENTION : efface les rayons, les boutiques, les produits, LES COMMANDES
+-- et les comptes des vendeurs (les comptes admin sont gardés).
 -- Tout est inventé : boutiques, produits et noms de modèles.
 -- ==========================================================================
 
 SET NAMES utf8mb4;
 
 DELETE FROM commandes;  -- et, en cascade, leurs colis et leurs lignes
+DELETE FROM comptes WHERE boutique_id IS NOT NULL;  -- les comptes admin sont gardés
 DELETE FROM produits;
 DELETE FROM boutiques;
 DELETE FROM rayons WHERE parent_id IS NOT NULL;

@@ -1,0 +1,168 @@
+/* ==========================================================================
+   Comptoir 9 — espace de gestion (admin et vendeurs)
+   Complète style.css : mêmes couleurs, mêmes polices, mêmes composants.
+   Pensé d'abord pour le téléphone : une colonne, des boutons faciles à toucher.
+   ========================================================================== */
+
+.admin-entete {
+    background: var(--sapin);
+    color: var(--papier);
+}
+
+.admin-entete__interieur {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--espace-xs) var(--espace-m);
+    padding-block: var(--espace-s);
+}
+
+.admin-entete__nom {
+    font-family: var(--police-titre);
+    font-size: 1.25rem;
+    font-weight: 800;
+}
+
+.admin-entete__role {
+    margin-left: .25rem;
+    padding: .1em .5em;
+    background: var(--jaune);
+    color: var(--encre);
+    border-radius: var(--rayon);
+    font-family: var(--police-texte);
+    font-size: .8125rem;
+    font-weight: 600;
+    vertical-align: middle;
+}
+
+.admin-entete__nav {
+    min-width: 0; /* sans cela, la liste de liens peut élargir la page sur un petit écran */
+}
+
+.admin-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 var(--espace-m);
+}
+
+.admin-nav a {
+    display: inline-block;
+    padding: .5rem 0;
+    color: var(--papier);
+    font-weight: 600;
+}
+
+.admin-nav a[aria-current="page"] {
+    text-decoration-thickness: 3px;
+}
+
+.admin-entete__deconnexion {
+    margin-left: auto;
+}
+
+.admin-entete__deconnexion button {
+    padding: .5rem .75rem;
+    background: none;
+    color: var(--papier);
+    border: 2px solid var(--papier);
+    border-radius: var(--rayon);
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.admin-entete__deconnexion button:hover {
+    background: var(--papier);
+    color: var(--encre);
+}
+
+.admin-page {
+    padding-block: var(--espace-l);
+}
+
+.admin-page > * + * {
+    margin-top: var(--espace-s);
+}
+
+/* --- Connexion ------------------------------------------------------------- */
+.connexion {
+    max-width: 26rem;
+    margin-inline: auto;
+}
+
+.connexion > * + * {
+    margin-top: var(--espace-s);
+}
+
+.connexion__logo {
+    display: inline-flex;
+    align-items: center;
+    gap: .35em;
+    font-family: var(--police-titre);
+    font-size: 1.625rem;
+    font-weight: 800;
+}
+
+.connexion__logo .logo__neuf {
+    display: inline-grid;
+    place-items: center;
+    width: 1.5em;
+    height: 1.5em;
+    background: var(--jaune);
+    border-radius: var(--rayon);
+}
+
+.connexion__titre {
+    font-size: var(--taille-h2);
+}
+
+/* --- Listes : une carte par commande, par message, par produit -------------- */
+.liste-admin {
+    display: grid;
+    gap: var(--espace-s);
+}
+
+.liste-admin > li {
+    max-width: none;
+}
+
+.carte-admin {
+    padding: var(--espace-s);
+    background: #fff;
+    border: var(--trait);
+    border-radius: var(--rayon);
+}
+
+.carte-admin > * + * {
+    margin-top: var(--espace-xs);
+}
+
+.carte-admin h2 {
+    font-size: 1.25rem;
+}
+
+.carte-admin__titre {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: var(--espace-xs);
+    font-family: var(--police-texte);
+    font-size: 1.0625rem;
+    font-weight: 700;
+}
+
+.carte-admin__texte {
+    padding: var(--espace-xs) var(--espace-s);
+    border-left: 4px solid var(--jaune);
+    overflow-wrap: anywhere; /* une longue adresse collée dans un message ne déborde pas */
+}
+
+.carte-admin--traite {
+    background: none;
+    border-style: dashed;
+}
+
+@media (min-width: 48rem) {
+    .liste-admin {
+        grid-template-columns: repeat(auto-fill, minmax(22rem, 1fr));
+    }
+}

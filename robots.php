@@ -11,6 +11,7 @@ User-agent: *
 Disallow: /panier.php
 Disallow: /commande.php
 Disallow: /commande-confirmee.php
+Disallow: /admin/
 
 Sitemap: <?= urlAbsolue('sitemap.xml') ?>
 
