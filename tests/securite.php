@@ -81,6 +81,14 @@ verifier('CSP présente', str_contains($accueil['entetes']['content-security-pol
 verifier('nosniff', ($accueil['entetes']['x-content-type-options'] ?? '') === 'nosniff');
 verifier('X-Frame-Options', isset($accueil['entetes']['x-frame-options']));
 verifier('Referrer-Policy', isset($accueil['entetes']['referrer-policy']));
+verifier('version de PHP non annoncée (pas d\'en-tête X-Powered-By)', !isset($accueil['entetes']['x-powered-by']));
+// En ligne seulement : HTTPS forcé et cookies Secure (en local, le site est en http)
+if (str_starts_with($base, 'https://')) {
+    $http = requete('http://' . substr($base, 8) . '/');
+    verifier('http redirigé vers https (301)', $http['code'] === 301 && str_starts_with($http['entetes']['location'] ?? '', 'https://'));
+    verifier('cookie de l\'espace de gestion marqué Secure', stripos(requete("$base/admin/connexion.php")['entetes']['set-cookie'] ?? '', 'secure') !== false);
+}
+verifier('MySQL à la même heure que PHP', abs(strtotime(db()->query('SELECT NOW()')->fetchColumn()) - time()) < 5);
 
 echo "Dossiers internes : 404\n";
 foreach (['/config/config.local.php', '/config/site.php', '/includes/db.php', '/sql/schema.sql', '/tests/securite.php', '/outils/'] as $chemin) {

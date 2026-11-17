@@ -12,6 +12,11 @@ if (PHP_SAPI !== 'cli' && !str_ends_with($_SERVER['HTTP_HOST'] ?? '', '.test')) 
     ini_set('display_errors', '0');
 }
 
+// La version de PHP n'a pas à être annoncée à chaque visiteur (en-tête X-Powered-By)
+if (PHP_SAPI !== 'cli') {
+    header_remove('X-Powered-By');
+}
+
 $site = require __DIR__ . '/../config/site.php';
 
 /**

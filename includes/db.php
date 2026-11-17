@@ -32,6 +32,11 @@ function db(): PDO
             // séparément à MySQL, une valeur ne peut donc jamais devenir du SQL.
             PDO::ATTR_EMULATE_PREPARES   => false,
         ]);
+
+        // MySQL compte en heure de Paris, comme PHP (helpers.php). Chez beaucoup d'hébergeurs,
+        // il est réglé en UTC : NOW() aurait alors une ou deux heures de retard sur l'affichage.
+        // Le décalage (« +01:00 », « +02:00 » en été) vient de PHP : rien à régler côté serveur.
+        $pdo->exec("SET time_zone = '" . (new DateTimeImmutable())->format('P') . "'");
     }
 
     return $pdo;
