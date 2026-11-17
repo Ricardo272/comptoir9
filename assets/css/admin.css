@@ -166,3 +166,31 @@
         grid-template-columns: repeat(auto-fill, minmax(22rem, 1fr));
     }
 }
+
+/* --- Espace vendeur ------------------------------------------------------- */
+.carte-admin__lignes > li {
+    max-width: none;
+}
+
+.carte-admin address {
+    font-style: normal;
+}
+
+/* Prix, ancien prix, stock, délai : deux par ligne sur téléphone, quatre sur grand écran */
+.champs-cote {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--espace-s);
+    align-items: start;
+}
+
+@media (min-width: 48rem) {
+    .champs-cote {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+.formulaire textarea,
+.formulaire select {
+    width: 100%;
+}

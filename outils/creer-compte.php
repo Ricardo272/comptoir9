@@ -46,10 +46,15 @@ function lireMotDePasse(string $invite): string
 
 // Connexion testée d'emblée : sans ce try, l'erreur afficherait une trace
 // contenant le mot de passe de la base (avec Xdebug ou display_errors).
+// Le message de PDO, lui, ne contient pas le mot de passe : on l'affiche pour savoir quoi corriger.
 try {
     db();
 } catch (Throwable $e) {
-    fwrite(STDERR, "La base ne répond pas : vérifiez que MySQL est démarré.\n");
+    $conseil = str_contains($e->getMessage(), 'could not find driver')
+        ? "Ce PHP n'a pas l'extension pdo_mysql. Lancez le script avec le PHP de Laragon :\n"
+        . '  & "C:\laragon\bin\php\php-8.1.10-Win32-vs16-x64\php.exe" ' . implode(' ', $argv) . "\n"
+        : "Vérifiez que MySQL est démarré et que config/config.local.php est juste.\n";
+    fwrite(STDERR, 'La base ne répond pas (' . $e->getMessage() . ").\n" . $conseil);
     exit(1);
 }
 

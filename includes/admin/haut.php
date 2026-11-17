@@ -15,7 +15,10 @@ $liensAdmin = match ($compte['role'] ?? null) {
         'commandes' => ['Commandes', 'admin/commandes.php'],
         'messages'  => ['Messages',  'admin/messages.php'],
     ],
-    'vendeur' => [],
+    'vendeur' => [
+        'colis'    => ['Mes colis',    'admin/colis.php'],
+        'produits' => ['Mes produits', 'admin/produits.php'],
+    ],
     default   => [],
 };
 $flash = lireFlash();

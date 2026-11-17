@@ -347,5 +347,121 @@ try {
 }
 verifier('comptes et message du test supprimés',
     !(int) db()->query("SELECT COUNT(*) FROM comptes WHERE identifiant LIKE 'test-securite-%'")->fetchColumn());
+echo "Espace vendeur : chaque boutique ne voit et ne modifie que ce qui est à elle\n";
+require_once __DIR__ . '/../includes/commande.php';
+
+$idBoutique = fn (string $slug) => (int) db()->query("SELECT id FROM boutiques WHERE slug = '$slug'")->fetchColumn();
+$idProduit  = fn (string $slug) => (int) db()->query("SELECT id FROM produits WHERE slug = '$slug'")->fetchColumn();
+$valeur     = fn (string $sql) => db()->query($sql)->fetchColumn();
+$kit   = $idProduit('kit-de-reparation-crevaison');   // Braquet
+$cable = $idProduit('cable-usb-c-tresse-2m');          // Octet & Cie
+$jeu   = $idProduit('jeu-cordee');                     // Dé à Six
+$kitAvant = db()->query("SELECT * FROM produits WHERE id = $kit")->fetch();
+$stocksAvant = db()->query("SELECT id, stock FROM produits WHERE id IN ($kit, $cable, $jeu)")->fetchAll(PDO::FETCH_KEY_PAIR);
+
+$mdpBraquet = bin2hex(random_bytes(12));
+$mdpDeASix  = bin2hex(random_bytes(12));
+$mdpAdmin2  = bin2hex(random_bytes(12));
+db()->exec("DELETE FROM comptes WHERE identifiant LIKE 'test-vendeur-%'");
+$creer->execute(['test-vendeur-braquet', password_hash($mdpBraquet, PASSWORD_DEFAULT), 'vendeur', $idBoutique('braquet')]);
+$creer->execute(['test-vendeur-deasix', password_hash($mdpDeASix, PASSWORD_DEFAULT), 'vendeur', $idBoutique('de-a-six')]);
+$creer->execute(['test-vendeur-admin', password_hash($mdpAdmin2, PASSWORD_DEFAULT), 'admin', null]);
+$numero = null;
+$nouveau = null;
+
+try {
+    // Une commande chez trois boutiques : un colis chacune
+    $quantites = [$kit => 1, $cable => 1, $jeu => 1];
+    $total = calculerPanier(produitsParId(array_keys($quantites)), $quantites, $site['frais_port'])['total'];
+    $numero = enregistrerCommande(['prenom' => 'Camille', 'nom' => 'Test', 'email' => 'camille@exemple.test', 'telephone' => '',
+        'adresse' => '3 rue des Essais', 'complement' => '', 'code_postal' => '69001', 'ville' => 'Lyon'],
+        $quantites, $total, $site['frais_port'])['numero'] ?? null;
+    $colisDe = fn (string $boutique) => (int) $valeur("SELECT c.id FROM colis c JOIN commandes o ON o.id = c.commande_id
+        WHERE o.numero = '$numero' AND c.boutique_id = " . $idBoutique($boutique));
+    $etatColis = fn (int $id) => $valeur("SELECT etat FROM colis WHERE id = $id");
+
+    // --- Colis -----------------------------------------------------------------
+    [, $braquet] = seConnecter($base, 'test-vendeur-braquet', $mdpBraquet);
+    $page = requete("$base/admin/colis.php", null, $braquet)['corps'];
+    verifier('vendeur : voit son colis, pas ceux des autres boutiques', $numero !== null
+        && str_contains($page, 'Kit de réparation crevaison') && !str_contains($page, 'Câble USB-C') && !str_contains($page, 'Cordée'));
+    verifier('vendeur : voit l\'adresse de livraison de son colis', str_contains($page, '3 rue des Essais'));
+    $csrfBraquet = csrfDe("$base/admin/colis.php", $braquet);
+    verifier('expédier sans jeton CSRF : refusé (400)',
+        requete("$base/admin/colis.php", ['colis' => $colisDe('braquet')], $braquet)['code'] === 400);
+    requete("$base/admin/colis.php", ['csrf' => $csrfBraquet, 'colis' => $colisDe('octet-et-cie')], $braquet);
+    verifier('expédier le colis d\'une autre boutique : refusé, rien ne change', $etatColis($colisDe('octet-et-cie')) === 'en_preparation');
+    requete("$base/admin/colis.php", ['csrf' => $csrfBraquet, 'colis' => $colisDe('braquet')], $braquet);
+    verifier('expédier son colis : enregistré', $etatColis($colisDe('braquet')) === 'expedie');
+    verifier('le client voit « Partiellement expédiée » dans son suivi', str_contains(
+        requete("$base/suivi.php", ['numero' => $numero, 'email' => 'camille@exemple.test'])['corps'], 'Partiellement expédiée'));
+    [, $deASix] = seConnecter($base, 'test-vendeur-deasix', $mdpDeASix);
+    $page = requete("$base/admin/colis.php", null, $deASix)['corps'];
+    verifier('l\'autre vendeur ne voit que son propre colis', str_contains($page, 'Cordée') && !str_contains($page, 'Kit de réparation'));
+
+    // --- Produits --------------------------------------------------------------
+    $page = requete("$base/admin/produits.php", null, $braquet)['corps'];
+    verifier('Mes produits : les 14 de Braquet, aucun d\'une autre boutique',
+        substr_count($page, '<li class="carte-admin') === 14 && !str_contains($page, 'Cordée'));
+    verifier('ouvrir le produit d\'une autre boutique : 404', requete("$base/admin/produit.php?id=$jeu", null, $braquet)['code'] === 404);
+
+    $champs = ['nom' => 'Kit modifié par le test', 'rayon_id' => (string) $valeur("SELECT id FROM rayons WHERE slug = 'entretien-pieces'"),
+               'description' => 'Description modifiée par le test.', 'caracteristiques' => "Ligne 1\nLigne 2",
+               'prix' => '9,90', 'prix_barre' => '', 'stock' => '42', 'delai_jours' => '3'];
+    requete("$base/admin/produit.php?id=$jeu", ['csrf' => $csrfBraquet] + $champs, $braquet);
+    verifier('modifier le produit d\'une autre boutique : refusé, rien ne change',
+        $valeur("SELECT nom FROM produits WHERE id = $jeu") === 'Cordée, jeu coopératif');
+    $r = requete("$base/admin/produit.php?id=$kit", ['csrf' => $csrfBraquet] + $champs, $braquet);
+    verifier('modifier son produit : enregistré (nom, prix en centimes, stock)', $r['code'] === 303
+        && $valeur("SELECT CONCAT(nom, '|', prix, '|', stock) FROM produits WHERE id = $kit") === 'Kit modifié par le test|990|42');
+    $r = requete("$base/admin/produit.php?id=$kit", ['csrf' => $csrfBraquet, 'prix_barre' => '5,00'] + $champs, $braquet);
+    verifier('ancien prix plus bas que le prix : refusé (422), rien n\'est écrit',
+        $r['code'] === 422 && $valeur("SELECT prix_barre FROM produits WHERE id = $kit") === null);
+    $r = requete("$base/admin/produit.php?id=$kit", ['csrf' => $csrfBraquet, 'rayon_id' => (string) $valeur("SELECT id FROM rayons WHERE slug = 'cuisine'")] + $champs, $braquet);
+    verifier('rayon parent au lieu d\'un sous-rayon : refusé (422)', $r['code'] === 422);
+    $r = requete("$base/admin/produit.php?id=$kit", ['csrf' => $csrfBraquet, 'nom' => '<script>alert(1)</script>', 'prix' => 'abc'] + $champs, $braquet);
+    verifier('saisie piégée : refusée et réaffichée échappée', $r['code'] === 422 && !str_contains($r['corps'], '<script>alert(1)</script>'));
+    verifier('modifier sans jeton CSRF : refusé (400)', requete("$base/admin/produit.php?id=$kit", $champs, $braquet)['code'] === 400);
+
+    // Ajout : une boutique glissée dans le formulaire est ignorée
+    $r = requete("$base/admin/produit.php", ['csrf' => $csrfBraquet, 'nom' => 'Sonnette de vélo test-sécurité',
+        'boutique_id' => (string) $idBoutique('de-a-six')] + $champs, $braquet);
+    $nouveau = db()->query("SELECT id, slug, boutique_id, etat FROM produits WHERE nom = 'Sonnette de vélo test-sécurité'")->fetch() ?: null;
+    verifier('ajouter un produit : rattaché à SA boutique (pas à celle du formulaire), en vente, slug sans accent',
+        $r['code'] === 303 && $nouveau && (int) $nouveau['boutique_id'] === $idBoutique('braquet')
+        && $nouveau['etat'] === 'en_vente' && $nouveau['slug'] === 'sonnette-de-velo-test-securite');
+    verifier('le nouveau produit est en ligne', $nouveau && requete("$base/produit.php?produit={$nouveau['slug']}")['code'] === 200);
+    requete("$base/admin/produits.php", ['csrf' => $csrfBraquet, 'produit' => $nouveau['id'] ?? 0, 'en_vente' => '0'], $braquet);
+    verifier('retirer de la vente : la fiche publique répond 404', $nouveau && requete("$base/produit.php?produit={$nouveau['slug']}")['code'] === 404);
+    requete("$base/admin/produits.php", ['csrf' => $csrfBraquet, 'produit' => $jeu, 'en_vente' => '0'], $braquet);
+    verifier('retirer le produit d\'une autre boutique : refusé', $valeur("SELECT etat FROM produits WHERE id = $jeu") === 'en_vente');
+    db()->exec('UPDATE produits SET etat = \'masque\' WHERE id = ' . (int) ($nouveau['id'] ?? 0));
+    requete("$base/admin/produits.php", ['csrf' => $csrfBraquet, 'produit' => $nouveau['id'] ?? 0, 'en_vente' => '1'], $braquet);
+    verifier('produit masqué par l\'admin : le vendeur ne peut pas le remettre en vente',
+        $valeur('SELECT etat FROM produits WHERE id = ' . (int) ($nouveau['id'] ?? 0)) === 'masque');
+
+    [, $admin2] = seConnecter($base, 'test-vendeur-admin', $mdpAdmin2);
+    verifier('admin : les pages vendeur lui sont refusées (403)',
+        requete("$base/admin/colis.php", null, $admin2)['code'] === 403 && requete("$base/admin/produit.php", null, $admin2)['code'] === 403);
+} finally {
+    if ($numero) {
+        db()->prepare('DELETE FROM commandes WHERE numero = ?')->execute([$numero]);
+    }
+    if ($nouveau) {
+        db()->exec('DELETE FROM produits WHERE id = ' . (int) $nouveau['id']);
+    }
+    $remettre = db()->prepare('UPDATE produits SET nom = :nom, description = :description, caracteristiques = :caracteristiques,
+        prix = :prix, prix_barre = :prix_barre, stock = :stock, delai_jours = :delai_jours, rayon_id = :rayon_id WHERE id = :id');
+    $remettre->execute(array_intersect_key($kitAvant, array_flip(['nom', 'description', 'caracteristiques', 'prix', 'prix_barre', 'stock', 'delai_jours', 'rayon_id', 'id'])));
+    foreach ($stocksAvant as $id => $stock) {
+        db()->exec("UPDATE produits SET stock = $stock WHERE id = $id");
+    }
+    db()->exec("DELETE FROM comptes WHERE identifiant LIKE 'test-vendeur-%'");
+}
+verifier('base remise en état : produit, stocks, comptes, commande',
+    db()->query("SELECT * FROM produits WHERE id = $kit")->fetch() == $kitAvant
+    && db()->query("SELECT id, stock FROM produits WHERE id IN ($kit, $cable, $jeu)")->fetchAll(PDO::FETCH_KEY_PAIR) == $stocksAvant
+    && !(int) $valeur("SELECT COUNT(*) FROM comptes WHERE identifiant LIKE 'test-vendeur-%'")
+    && !(int) $valeur("SELECT COUNT(*) FROM produits WHERE nom LIKE '%test-sécurité%'"));
 echo "\n" . ($echecs === 0 ? 'Tout passe.' : "$echecs échec(s).") . "\n";
 exit($echecs === 0 ? 0 : 1);
