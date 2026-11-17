@@ -86,14 +86,17 @@ PHP 8 et MySQL, sans framework · Projet de portfolio de Ricardo Remond
 
 | Contrôle | Résultat |
 |---|---|
-| `tests/securite.php` | 141 vérifications, vu de l'extérieur : pages sans cookie, en-têtes, dossiers internes, saisies piégées, CSRF, sessions, rôles, cloisonnement des vendeurs, démonstration, 120 adresses du plan du site |
+| `tests/securite.php` | 143 vérifications sur le site en ligne (141 en local, sans HTTPS), vu de l'extérieur : pages sans cookie, en-têtes, HTTPS, dossiers internes, saisies piégées, CSRF, sessions, rôles, cloisonnement des vendeurs, démonstration, 120 adresses du plan du site |
 | `tests/catalogue.php` | 70 vérifications : rayons, recherche, filtres, tri, pagination, visibilité, droits de l'utilisateur MySQL |
 | `tests/commande.php` | 60 vérifications : frais de port, découpage en colis, stocks, dernier exemplaire, suivi |
 | `tests/helpers.php` | 26 vérifications : prix, échappement, images, données structurées |
-| Lighthouse mobile | à mesurer sur le site en ligne |
-| Validateur HTML | à mesurer sur le site en ligne |
+| Lighthouse 13.6 (mobile) | 100 / 100 / 100 / 100 (performance, accessibilité, bonnes pratiques, référencement) sur l'accueil, un rayon et une fiche produit ; affichage principal en 0,8 à 0,9 s en 4G lente, aucun décalage de mise en page |
+| Lighthouse 13.6 (ordinateur) | 100 / 100 / 100 / 100 sur l'accueil |
+| Validateur HTML du W3C | 0 erreur sur l'accueil, un rayon, une fiche produit, le contact et la connexion à la gestion |
+| Test des résultats enrichis de Google | fiche produit : extrait de produit, fiche de marchand et fil d'Ariane valides ; `Organization` sans erreur (validator.schema.org) |
 
-Chaque fichier de test commence par un cas volontairement faux, qu'il doit refuser.
+Mesures faites sur le site en ligne le 18 novembre 2026 (un passage par page : les notes Lighthouse
+varient un peu d'un passage à l'autre). Chaque fichier de test commence par un cas volontairement faux, qu'il doit refuser.
 
 ## Démarche
 
