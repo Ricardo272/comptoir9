@@ -8,5 +8,13 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 verifierCsrf();
+
+// Un visiteur de démonstration qui se déconnecte libère la démo : le suivant la retrouvera
+// dans son état de départ sans attendre 20 minutes (voir includes/demo.php)
+$compte = compteConnecte();
+if ($compte && $compte['demo']) {
+    db()->prepare('UPDATE comptes SET derniere_activite = NULL WHERE id = :id')->execute(['id' => $compte['id']]);
+}
+
 deconnecter();
 rediriger('admin/connexion.php');

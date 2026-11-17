@@ -30,7 +30,12 @@ require __DIR__ . '/../includes/admin/haut.php';
 
 <h1>Mes produits</h1>
 <p><?= count($produits) ?> produit<?= count($produits) > 1 ? 's' : '' ?> chez <?= e($compte['boutique']) ?>.</p>
+<?php if ($compte['demo']): ?>
+<p class="avis">En démonstration, on ne peut pas ajouter de produit ni changer les textes, car ils s'affichent
+   sur le site public. Les prix, les stocks, les délais et la mise en vente se modifient librement.</p>
+<?php else: ?>
 <p><a class="bouton bouton--accent" href="<?= e(url('admin/produit.php')) ?>">Ajouter un produit</a></p>
+<?php endif; ?>
 
 <ul class="liste-admin" role="list">
 <?php foreach ($produits as $p): ?>

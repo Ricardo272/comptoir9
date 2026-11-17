@@ -237,3 +237,29 @@
 .liste-moderation .pastille {
     white-space: nowrap;
 }
+
+/* --- Démonstration -------------------------------------------------------- */
+.essai {
+    padding: var(--espace-m);
+    background: var(--jaune);
+    border: var(--trait);
+    border-radius: var(--rayon);
+}
+
+.essai > * + * {
+    margin-top: var(--espace-s);
+}
+
+.essai .bouton--accent {
+    background: var(--papier);
+}
+
+.essai__titre {
+    font-size: 1.375rem;
+}
+
+/* Champ qu'on ne peut pas modifier en démonstration */
+.champ [readonly] {
+    border-style: dashed;
+    opacity: .75;
+}

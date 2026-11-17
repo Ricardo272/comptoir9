@@ -8,4 +8,5 @@ if (empty($site['demo'])) {
 ?>
 <p class="bandeau-demo">
     <strong>Site de démonstration</strong> : Comptoir 9 est une boutique fictive, aucun paiement n'est pris et rien n'est livré.
+    <a href="<?= e(url('admin/connexion.php')) ?>">Essayer l'espace de gestion</a>
 </p>

@@ -8,6 +8,7 @@
 SET NAMES utf8mb4;
 
 -- On supprime d'abord les tables qui dépendent des autres (clés étrangères)
+DROP TABLE IF EXISTS produits_depart;
 DROP TABLE IF EXISTS comptes;
 DROP TABLE IF EXISTS messages;
 DROP TABLE IF EXISTS commande_lignes;
@@ -75,7 +76,6 @@ CREATE TABLE produits (
     prix              INT UNSIGNED       NOT NULL,
     prix_barre        INT UNSIGNED       NULL,
     stock             SMALLINT UNSIGNED  NOT NULL DEFAULT 0,
-    stock_demo        SMALLINT UNSIGNED  NULL,           -- stock de départ, rétabli par outils/remettre-stocks.php
     delai_jours       TINYINT UNSIGNED   NOT NULL,       -- délai d'expédition annoncé
     etat              ENUM('en_vente', 'retire', 'masque') NOT NULL DEFAULT 'en_vente',
     cree_le           DATETIME           NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -177,6 +177,8 @@ CREATE TABLE messages (
 -- role 'admin'   : tout le site, sans boutique.
 -- role 'vendeur' : sa seule boutique (boutique_id), jamais celles des autres.
 -- echecs, bloque_jusqua : blocage après 5 mauvais mots de passe d'affilée.
+-- demo : comptes ouverts aux visiteurs du portfolio (voir includes/demo.php) ;
+-- leur mot de passe « ! » n'est l'empreinte d'aucun mot de passe : on ne peut pas s'y connecter par le formulaire.
 -- --------------------------------------------------------------------------
 CREATE TABLE comptes (
     id             SMALLINT UNSIGNED  NOT NULL AUTO_INCREMENT,
@@ -186,9 +188,19 @@ CREATE TABLE comptes (
     boutique_id    SMALLINT UNSIGNED  NULL,
     echecs         TINYINT UNSIGNED   NOT NULL DEFAULT 0,
     bloque_jusqua  DATETIME           NULL,
+    demo           TINYINT(1)         NOT NULL DEFAULT 0, -- compte de démonstration : entrée par bouton, sans mot de passe
+    derniere_activite DATETIME        NULL,              -- comptes de démonstration seulement (remise à zéro)
     PRIMARY KEY (id),
     UNIQUE KEY comptes_identifiant (identifiant),
     CONSTRAINT comptes_boutique FOREIGN KEY (boutique_id) REFERENCES boutiques (id),
     -- Un admin n'a pas de boutique ; un vendeur en a toujours une
     CONSTRAINT comptes_role CHECK ((role = 'admin' AND boutique_id IS NULL) OR (role = 'vendeur' AND boutique_id IS NOT NULL))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+-- --------------------------------------------------------------------------
+-- État de départ des produits, rempli par seed.sql : la démonstration y revient
+-- pour chaque nouveau visiteur (includes/demo.php). Une simple copie des
+-- colonnes, sans contraintes : elle n'est jamais lue par le site public.
+-- --------------------------------------------------------------------------
+CREATE TABLE produits_depart (PRIMARY KEY (id)) AS SELECT * FROM produits WHERE 0;

@@ -337,8 +337,10 @@ try {
         str_contains(seConnecter($base, 'test-securite-admin', $mdpAdmin)[0]['corps'], 'Trop de tentatives'));
     verifier('identifiant inconnu : même message qu\'un mauvais mot de passe',
         str_contains(seConnecter($base, 'inconnu-' . bin2hex(random_bytes(4)), 'x')[0]['corps'], 'Identifiant ou mot de passe incorrect'));
-    verifier('mots de passe enregistrés sous forme d\'empreinte',
-        !(int) db()->query("SELECT COUNT(*) FROM comptes WHERE mot_de_passe NOT LIKE '$2y$%'")->fetchColumn());
+    // Les comptes de démonstration ont volontairement « ! » : ils n'entrent que par les boutons (contrôlé plus bas)
+    verifier('mots de passe des vrais comptes enregistrés sous forme d\'empreinte',
+        !(int) db()->query("SELECT COUNT(*) FROM comptes WHERE demo = 0 AND mot_de_passe NOT LIKE '$2y$%'")->fetchColumn()
+        && !(int) db()->query("SELECT COUNT(*) FROM comptes WHERE demo = 1 AND mot_de_passe <> '!'")->fetchColumn());
 } finally {
     db()->exec("DELETE FROM comptes WHERE identifiant IN ('test-securite-admin', 'test-securite-vendeur')");
     if ($idMessage) {
@@ -525,5 +527,100 @@ try {
     db()->exec("UPDATE produits SET etat = 'en_vente' WHERE slug = '$gravel'");
     db()->exec("DELETE FROM comptes WHERE identifiant LIKE 'test-moderation-%'");
 }
+echo "Démonstration : boutons d'essai et remise à zéro\n";
+require_once __DIR__ . '/../includes/demo.php';
+
+/** Entre en démo depuis la page de connexion : retourne [réponse, en-tête Cookie de la session]. */
+function entrerDemo(string $base, string $role): array
+{
+    [$cookie, $csrf] = pageConnexion($base);
+    $r = requete($base . '/admin/demo.php', ['csrf' => $csrf, 'role' => $role], $cookie);
+    $session = isset($r['entetes']['set-cookie']) ? 'Cookie: ' . explode(';', $r['entetes']['set-cookie'])[0] . "\r\n" : '';
+    return [$r, $session];
+}
+$personne = fn () => db()->exec('UPDATE comptes SET derniere_activite = NULL WHERE demo = 1'); // « plus personne en démo »
+$gravelId = $idProduit('velo-gravel-braquet-g1');
+
+verifier('page de connexion : les deux boutons d\'essai', substr_count(requete("$base/admin/connexion.php")['corps'], 'admin/demo.php') === 2);
+verifier('site public : lien vers l\'espace de gestion dans le bandeau',
+    (bool) preg_match('{<p class="bandeau-demo">.*?<a href="/admin/connexion\.php">Essayer l\'espace de gestion</a>}s', requete("$base/")['corps']));
+verifier('entrer en démo sans jeton CSRF : refusé (400)', requete("$base/admin/demo.php", ['role' => 'admin'])['code'] === 400);
+verifier('entrer en démo par un lien (GET) : renvoie à la connexion',
+    str_ends_with(requete("$base/admin/demo.php?role=admin")['entetes']['location'] ?? '', '/admin/connexion.php'));
+[$r] = entrerDemo($base, 'inconnu');
+verifier('rôle inventé : refusé, pas de session ouverte', str_ends_with($r['entetes']['location'] ?? '', '/admin/connexion.php'));
+verifier('compte de démo par le formulaire, même avec « ! » : refusé',
+    str_contains(seConnecter($base, 'demo-admin', '!')[0]['corps'], 'Identifiant ou mot de passe incorrect'));
+
+// On salit la démo, comme un visiteur précédent
+db()->exec("UPDATE produits SET prix = 1, prix_barre = NULL, stock = 0, etat = 'masque' WHERE id = $gravelId");
+db()->exec("UPDATE boutiques SET etat = 'suspendue' WHERE slug = 'maison-lin'");
+db()->exec("UPDATE messages SET traite = 1");
+db()->exec("INSERT INTO produits (boutique_id, rayon_id, slug, nom, description, caracteristiques, prix, stock, delai_jours)
+            VALUES (1, 11, 'ajoute-par-un-visiteur', 'Ajouté par un visiteur', 'Test.', 'Test', 1000, 5, 2)");
+
+// Personne en démo depuis 20 minutes : le visiteur suivant trouve l'état de départ
+$personne();
+[$r, $admin] = entrerDemo($base, 'admin');
+verifier('entrée admin : redirigée vers l\'espace, nouvelle session', str_ends_with($r['entetes']['location'] ?? '', '/admin/') && $admin !== '');
+verifier('remise à zéro : 4 commandes (2 à expédier, 2 parties) et 3 messages (2 à traiter)',
+    (int) $valeur('SELECT COUNT(*) FROM commandes') === 4
+    && (int) $valeur("SELECT COUNT(DISTINCT o.id) FROM commandes o JOIN colis c ON c.commande_id = o.id WHERE c.etat = 'expedie'") === 2
+    && (int) $valeur('SELECT COUNT(*) FROM messages') === 3 && (int) $valeur('SELECT COUNT(*) FROM messages WHERE traite = 0') === 2);
+verifier('remise à zéro : produit rétabli, boutique en ligne, produit ajouté supprimé',
+    $valeur("SELECT CONCAT(p.prix, '|', p.etat) FROM produits p WHERE id = $gravelId") === $valeur("SELECT CONCAT(prix, '|', etat) FROM produits_depart WHERE id = $gravelId")
+    && $valeur("SELECT etat FROM boutiques WHERE slug = 'maison-lin'") === 'active'
+    && !(int) $valeur("SELECT COUNT(*) FROM produits WHERE slug = 'ajoute-par-un-visiteur'")
+    && (int) $valeur('SELECT COUNT(*) FROM produits') === (int) $valeur('SELECT COUNT(*) FROM produits_depart'));
+verifier('remise à zéro : les identifiants des produits ne changent pas', $idProduit('velo-gravel-braquet-g1') === $gravelId);
+verifier('remise à zéro : le vrai compte « octet » est gardé', (int) $valeur("SELECT COUNT(*) FROM comptes WHERE demo = 0 AND identifiant = 'octet'") === 1);
+$page = requete("$base/admin/commandes.php", null, $admin)['corps'];
+verifier('admin de démo : commandes affichées, bandeau de démonstration', str_contains($page, 'Camille Martin') && str_contains($page, 'Démonstration'));
+verifier('admin de démo : les pages vendeur lui sont refusées (403)', requete("$base/admin/colis.php", null, $admin)['code'] === 403);
+
+// Un visiteur est en démo : un deuxième visiteur n'efface pas son travail
+db()->exec('UPDATE messages SET traite = 1');
+[, $deuxieme] = entrerDemo($base, 'boutique');
+verifier('démo déjà en cours : pas de remise à zéro sous les yeux du premier visiteur', !(int) $valeur('SELECT COUNT(*) FROM messages WHERE traite = 0'));
+
+// --- Vendeur de démonstration (Octet & Cie) --------------------------------------
+$page = requete("$base/admin/colis.php", null, $deuxieme)['corps'];
+verifier('boutique de démo : 4 colis Octet & Cie, dont 2 à préparer', substr_count($page, '<li class="carte-admin') === 4
+    && substr_count($page, 'À préparer') === 2 && !str_contains($page, 'Cocotte'));
+verifier('boutique de démo : pas de bouton d\'ajout, et l\'ajout direct est refusé',
+    !str_contains(requete("$base/admin/produits.php", null, $deuxieme)['corps'], 'Ajouter un produit')
+    && str_ends_with(requete("$base/admin/produit.php", null, $deuxieme)['entetes']['location'] ?? '', '/admin/produits.php'));
+$casque = $idProduit('casque-sans-fil-octet-s2');
+$avant = db()->query("SELECT nom, description, caracteristiques FROM produits WHERE id = $casque")->fetch();
+$r = requete("$base/admin/produit.php?id=$casque", ['csrf' => csrfDe("$base/admin/produits.php", $deuxieme),
+    'nom' => 'Texte grossier', 'description' => 'Une description changée par un visiteur.', 'caracteristiques' => 'Changée',
+    'rayon_id' => (string) $valeur("SELECT rayon_id FROM produits WHERE id = $casque"),
+    'prix' => '59,90', 'prix_barre' => '', 'stock' => '3', 'delai_jours' => '4'], $deuxieme);
+verifier('boutique de démo : prix et stock modifiés, textes inchangés', $r['code'] === 303
+    && db()->query("SELECT nom, description, caracteristiques FROM produits WHERE id = $casque")->fetch() == $avant
+    && $valeur("SELECT CONCAT(prix, '|', stock) FROM produits WHERE id = $casque") === '5990|3');
+verifier('boutique de démo : champs de texte en lecture seule',
+    substr_count(requete("$base/admin/produit.php?id=$casque", null, $deuxieme)['corps'], ' readonly') === 3);
+
+// Le visiteur se déconnecte : la démo est libérée, le suivant retrouve l'état de départ
+db()->exec('UPDATE messages SET traite = 1');
+$personne(); // l'admin de démo du début n'est plus là
+requete("$base/admin/deconnexion.php", ['csrf' => csrfDe("$base/admin/produits.php", $deuxieme)], $deuxieme);
+[, $troisieme] = entrerDemo($base, 'admin');
+verifier('après déconnexion du visiteur : le suivant retrouve l\'état de départ',
+    $troisieme !== '' && (int) $valeur('SELECT COUNT(*) FROM messages WHERE traite = 0') === 2
+    // Prix de départ ; stock de départ moins 1, car une commande de démonstration contient ce casque
+    && $valeur("SELECT CONCAT(prix, '|', stock) FROM produits WHERE id = $casque") === $valeur("SELECT CONCAT(prix, '|', stock - 1) FROM produits_depart WHERE id = $casque"));
+
+// Démo indisponible quand le site n'est plus en mode démo
+$site['demo'] = false;
+verifier('mode démo coupé : plus de démonstration', !demoDisponible() && !entrerEnDemo('admin'));
+$site['demo'] = true;
+
+// On laisse la démo propre pour le visiteur suivant
+$personne();
+reinitialiserDemo();
+verifier('démo laissée dans son état de départ', (int) $valeur('SELECT COUNT(*) FROM commandes') === 4
+    && (int) $valeur("SELECT COUNT(*) FROM produits p JOIN produits_depart d USING (id) WHERE p.prix <> d.prix OR p.nom <> d.nom") === 0);
 echo "\n" . ($echecs === 0 ? 'Tout passe.' : "$echecs échec(s).") . "\n";
 exit($echecs === 0 ? 0 : 1);

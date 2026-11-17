@@ -67,6 +67,11 @@ $flash = lireFlash();
 </header>
 <?php endif; ?>
 
+<?php if ($compte && $compte['demo']): ?>
+<p class="bandeau-demo"><strong>Démonstration</strong> : faites ce que vous voulez. Tout revient à l'état de départ
+   pour le visiteur suivant, après <?= DEMO_PAUSE_MINUTES ?> minutes sans activité.</p>
+<?php endif; ?>
+
 <main id="contenu" class="conteneur admin-page">
 <?php if ($flash): ?>
     <p class="avis<?= $flash['type'] === 'erreur' ? ' avis--erreur' : '' ?>" role="status"><?= e($flash['message']) ?></p>

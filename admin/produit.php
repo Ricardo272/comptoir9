@@ -7,6 +7,12 @@ require_once __DIR__ . '/../includes/admin/vendeur.php';
 $compte = exigerConnexion('vendeur');
 $boutiqueId = (int) $compte['boutique_id']; // jamais une valeur venue de l'adresse ou du formulaire
 
+// Démonstration : pas d'ajout de produit (un nom de produit s'afficherait sur le site public)
+if ($compte['demo'] && !isset($_GET['id'])) {
+    flash('L\'ajout de produits est désactivé en démonstration.', 'erreur');
+    rediriger('admin/produits.php');
+}
+
 // Le produit à modifier doit appartenir à la boutique : sinon, il « n'existe pas » (404)
 $produitId = filter_var($_GET['id'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
 $produit = null;
@@ -39,7 +45,13 @@ $erreurs = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verifierCsrf();
-    [$propre, $erreurs] = verifierProduit($_POST);
+    $envoye = $_POST;
+    if ($compte['demo']) {
+        // Démonstration : les textes saisis sont ignorés, on garde ceux du produit
+        $envoye = ['nom' => $produit['nom'], 'description' => $produit['description'],
+                   'caracteristiques' => $produit['caracteristiques']] + $envoye;
+    }
+    [$propre, $erreurs] = verifierProduit($envoye);
     $valeurs = $propre['saisie'];
 
     if (!$erreurs) {
@@ -67,6 +79,9 @@ require __DIR__ . '/../includes/admin/haut.php';
 
 <p><a href="<?= e(url('admin/produits.php')) ?>">← Mes produits</a></p>
 <h1><?= $produit ? 'Modifier le produit' : 'Ajouter un produit' ?></h1>
+<?php if ($compte['demo']): ?>
+<p class="avis">Démonstration : le nom, la description et les caractéristiques ne se modifient pas.</p>
+<?php endif; ?>
 <?php if ($produit && $produit['etat'] === 'en_vente'): ?>
 <p><a href="<?= e(url('produit.php?produit=' . rawurlencode($produit['slug']))) ?>">Voir la fiche sur le site</a></p>
 <?php endif; ?>
@@ -88,7 +103,7 @@ require __DIR__ . '/../includes/admin/haut.php';
 
     <p class="champ">
         <label for="nom">Nom</label>
-        <input id="nom" type="text" name="nom" value="<?= e($valeurs['nom']) ?>" maxlength="120" required<?= attributsChamp('nom', $erreurs) ?>>
+        <input id="nom" type="text" name="nom" value="<?= e($valeurs['nom']) ?>" maxlength="120" required<?= $compte['demo'] ? ' readonly' : '' ?><?= attributsChamp('nom', $erreurs) ?>>
         <?= messageErreur('nom', $erreurs) ?>
 
     </p>
@@ -113,14 +128,14 @@ require __DIR__ . '/../includes/admin/haut.php';
 
     <p class="champ">
         <label for="description">Description</label>
-        <textarea id="description" name="description" rows="3" maxlength="500" required<?= attributsChamp('description', $erreurs) ?>><?= e($valeurs['description']) ?></textarea>
+        <textarea id="description" name="description" rows="3" maxlength="500" required<?= $compte['demo'] ? ' readonly' : '' ?><?= attributsChamp('description', $erreurs) ?>><?= e($valeurs['description']) ?></textarea>
         <?= messageErreur('description', $erreurs) ?>
 
     </p>
 
     <p class="champ">
         <label for="caracteristiques">Caractéristiques</label>
-        <textarea id="caracteristiques" name="caracteristiques" rows="4" required<?= attributsChamp('caracteristiques', $erreurs, 'aide-caracteristiques') ?>><?= e($valeurs['caracteristiques']) ?></textarea>
+        <textarea id="caracteristiques" name="caracteristiques" rows="4" required<?= $compte['demo'] ? ' readonly' : '' ?><?= attributsChamp('caracteristiques', $erreurs, 'aide-caracteristiques') ?>><?= e($valeurs['caracteristiques']) ?></textarea>
         <span class="champ__aide" id="aide-caracteristiques">Une par ligne, 8 au plus.</span>
         <?= messageErreur('caracteristiques', $erreurs) ?>
 

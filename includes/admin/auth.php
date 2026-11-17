@@ -11,6 +11,9 @@ require_once __DIR__ . '/../db.php';
 require_once __DIR__ . '/../formulaire.php';
 
 const ADMIN_INACTIVITE      = 7200; // secondes : déconnexion après 2 h sans activité
+// Démonstration : déconnexion après 20 minutes sans activité ; c'est aussi le délai après
+// lequel la démo est remise à zéro pour le visiteur suivant (includes/demo.php).
+const DEMO_PAUSE_MINUTES    = 20;
 const ADMIN_ECHECS_MAX      = 5;    // échecs de connexion d'affilée avant blocage
 const ADMIN_BLOCAGE_MINUTES = 15;
 // Empreinte de « mot de passe factice » : vérifiée quand l'identifiant n'existe pas
@@ -50,10 +53,10 @@ function demarrerSession(): void
 
 /**
  * Le compte connecté, ou null :
- *   ['id', 'identifiant', 'role' => 'admin'|'vendeur', 'boutique_id', 'boutique']
+ *   ['id', 'identifiant', 'role' => 'admin'|'vendeur', 'boutique_id', 'demo', 'boutique']
  * Le rôle et la boutique sont relus en base à chaque page : un compte supprimé
  * ou modifié prend effet aussitôt, sans attendre la fin de la session.
- * Déconnecte au passage après 2 h d'inactivité.
+ * Déconnecte au passage après 2 h d'inactivité (20 minutes pour un compte de démonstration).
  */
 function compteConnecte(): ?array
 {
@@ -63,25 +66,25 @@ function compteConnecte(): ?array
         return null;
     }
 
-    if (time() - ($_SESSION['derniere_activite'] ?? 0) > ADMIN_INACTIVITE) {
-        deconnecter();
-        return null;
-    }
-
     $requete = db()->prepare(
-        'SELECT c.id, c.identifiant, c.role, c.boutique_id, b.nom AS boutique
+        'SELECT c.id, c.identifiant, c.role, c.boutique_id, c.demo, b.nom AS boutique
          FROM comptes c LEFT JOIN boutiques b ON b.id = c.boutique_id
          WHERE c.id = :id'
     );
     $requete->execute(['id' => $_SESSION['compte_id']]);
     $compte = $requete->fetch();
 
-    if (!$compte) {
+    $inactivite = $compte && $compte['demo'] ? DEMO_PAUSE_MINUTES * 60 : ADMIN_INACTIVITE;
+    if (!$compte || time() - ($_SESSION['derniere_activite'] ?? 0) > $inactivite) {
         deconnecter();
         return null;
     }
 
     $_SESSION['derniere_activite'] = time();
+    if ($compte['demo']) {
+        // La démo est « en cours » tant qu'un visiteur s'en sert : pas de remise à zéro sous ses yeux
+        db()->prepare('UPDATE comptes SET derniere_activite = NOW() WHERE id = :id')->execute(['id' => $compte['id']]);
+    }
     return $compte;
 }
 
@@ -125,7 +128,7 @@ function exigerConnexion(?string $role = null): array
 function connecter(string $identifiant, string $motDePasse): string
 {
     $requete = db()->prepare(
-        'SELECT id, identifiant, mot_de_passe, echecs, bloque_jusqua FROM comptes WHERE identifiant = :identifiant'
+        'SELECT id, identifiant, mot_de_passe, echecs, bloque_jusqua FROM comptes WHERE identifiant = :identifiant AND demo = 0'
     );
     $requete->execute(['identifiant' => $identifiant]);
     $compte = $requete->fetch();

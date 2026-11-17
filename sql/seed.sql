@@ -9,7 +9,7 @@
 SET NAMES utf8mb4;
 
 DELETE FROM commandes;  -- et, en cascade, leurs colis et leurs lignes
-DELETE FROM comptes WHERE boutique_id IS NOT NULL;  -- les comptes admin sont gardés
+DELETE FROM comptes WHERE boutique_id IS NOT NULL OR demo = 1;  -- les vrais comptes admin sont gardés
 DELETE FROM produits;
 DELETE FROM boutiques;
 DELETE FROM rayons WHERE parent_id IS NOT NULL;
@@ -339,5 +339,11 @@ INSERT INTO produits (boutique_id, rayon_id, slug, nom, description, caracterist
 -- toujours le même : la rubrique « Nouveautés » mêle ainsi tous les rayons.
 UPDATE produits SET cree_le = '2026-11-10 09:00:00' - INTERVAL ((id * 37) % 80) DAY;
 
--- Stock de départ, que outils/remettre-stocks.php rétablit sur le site de démonstration
-UPDATE produits SET stock_demo = stock;
+-- État de départ des produits, auquel la démonstration revient (includes/demo.php)
+DELETE FROM produits_depart;
+INSERT INTO produits_depart SELECT * FROM produits;
+
+-- Comptes de démonstration : entrée par les boutons de la page de connexion, jamais par mot de passe
+INSERT INTO comptes (identifiant, mot_de_passe, role, boutique_id, demo) VALUES
+('demo-admin',    '!', 'admin',   NULL, 1),
+('demo-boutique', '!', 'vendeur', 1,    1);  -- Octet & Cie
