@@ -9,7 +9,7 @@ $epuise = $p['stock'] <= 0;
 ?>
 <article class="carte-produit<?= $epuise ? ' carte-produit--epuise' : '' ?>">
     <div class="carte-produit__photo">
-        <?= image('produits/' . $p['slug'] . '.jpg', '', 600, 600) /* alt vide : le nom est juste dessous */ ?>
+        <?= imageProduit($p, 600) ?>
 
 <?php if ($epuise): ?>
         <p class="pastille pastille--epuise">Épuisé</p>

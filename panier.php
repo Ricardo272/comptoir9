@@ -104,7 +104,7 @@ require_once __DIR__ . '/includes/header.php';
 <?php foreach ($colis['lignes'] as $ligne): ?>
 <?php $article = $ligne['produit']; ?>
                     <li class="ligne">
-                        <?= image('produits/' . $article['slug'] . '.jpg', '', 160, 160, 'ligne__photo') ?>
+                        <?= imageProduit($article, 160, 'ligne__photo') ?>
 
                         <div class="ligne__texte">
                             <p class="ligne__nom"><a href="<?= e(url('produit.php?produit=' . rawurlencode($article['slug']))) ?>"><?= e($article['nom']) ?></a></p>

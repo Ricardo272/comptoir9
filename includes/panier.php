@@ -103,9 +103,10 @@ function produitsParId(array $ids, bool $verrouiller = false): array
     }
     $requete = db()->prepare(
         "SELECT p.id, p.slug, p.nom, p.prix, p.stock,
-                b.id AS boutique_id, b.nom AS boutique, b.slug AS boutique_slug
+                b.id AS boutique_id, b.nom AS boutique, b.slug AS boutique_slug, r.slug AS rayon_slug
          FROM produits p
          JOIN boutiques b ON b.id = p.boutique_id
+         JOIN rayons r ON r.id = p.rayon_id
          WHERE p.etat = 'en_vente' AND b.etat = 'active'
            AND p.id IN (" . implode(',', array_fill(0, count($ids), '?')) . ')
          ORDER BY b.id, p.nom' . ($verrouiller ? ' FOR UPDATE' : '')

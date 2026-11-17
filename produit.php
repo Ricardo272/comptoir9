@@ -34,6 +34,7 @@ $pageJsonLd = [
     '@type'       => 'Product',
     'name'        => $produit['nom'],
     'description' => $produit['description'],
+    'image'       => urlAbsolue('assets/img/' . cheminImageProduit($produit)),
     'sku'         => $produit['slug'],
     'offers'      => [
         '@type'         => 'Offer',
@@ -56,7 +57,7 @@ require_once __DIR__ . '/includes/header.php';
 
             <div class="fiche">
                 <div class="fiche__photo">
-                    <?= image('produits/' . $produit['slug'] . '.jpg', $produit['nom'], 600, 600, '', true) ?>
+                    <?= imageProduit($produit, 600, '', true) ?>
 
                 </div>
 

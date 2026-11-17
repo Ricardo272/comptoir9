@@ -13,6 +13,7 @@ if (PHP_SAPI !== 'cli') {
 
 require __DIR__ . '/../includes/donnees/rayons.php';
 require __DIR__ . '/../includes/donnees/catalogue.php';
+require __DIR__ . '/../includes/panier.php';
 
 $echecs = 0;
 
@@ -137,6 +138,23 @@ $cas[] = ['produit masqué : absent',                  produit('cocotte-fonte-em
 $cas[] = ['produit retiré : absent',                  produit('jeu-cordee'), null];
 db()->rollBack();
 $cas[] = ['produit de retour après le test', produit('jeu-cordee') !== null, true];
+
+// --- Images des produits : chaque produit a une illustration qui existe -------------------
+$enBasePanier = produitsParId(array_map('intval', db()->query('SELECT id FROM produits ORDER BY id LIMIT 1')->fetchAll(PDO::FETCH_COLUMN)));
+$sansImage = array_filter(produitsNouveautes(200), fn ($p) => !is_file(__DIR__ . '/../assets/img/' . cheminImageProduit($p)));
+$cas[] = ['image : aucun produit sans fichier',        array_column($sansImage, 'slug'), []];
+$cas[] = ['image : illustration du sous-rayon',        cheminImageProduit(['slug' => 'sans-photo', 'rayon_slug' => 'cuisson']), 'rayons/cuisson.svg'];
+$cas[] = ['image : illustration au texte vide',        str_contains(imageProduit(['slug' => 'sans-photo', 'rayon_slug' => 'cuisson', 'nom' => 'Cocotte'], 600), 'alt=""'), true];
+$cas[] = ['image : pas d\'image de remplacement',      str_contains(imageProduit($cocotte, 600), 'image-remplacement'), false];
+$cas[] = ['image : la fiche et le panier ont le sous-rayon', [$cocotte['rayon_slug'], reset($enBasePanier)['rayon_slug'] !== ''], ['cuisson', true]];
+// Une vraie photo déposée prend le pas sur l'illustration (fichier créé puis supprimé)
+$photo = __DIR__ . '/../assets/img/produits/test-photo-temporaire.jpg';
+@mkdir(dirname($photo), 0755, true);
+file_put_contents($photo, 'x');
+$cas[] = ['image : la photo prend le pas',             cheminImageProduit(['slug' => 'test-photo-temporaire', 'rayon_slug' => 'cuisson']), 'produits/test-photo-temporaire.jpg'];
+$cas[] = ['image : photo décrite par le nom',          str_contains(imageProduit(['slug' => 'test-photo-temporaire', 'rayon_slug' => 'cuisson', 'nom' => 'Cocotte'], 600), 'alt="Cocotte"'), true];
+unlink($photo);
+@rmdir(dirname($photo));
 
 // --- Droits de l'utilisateur du site : il ne doit pas pouvoir toucher à la structure
 $refus = function (string $sql): bool {

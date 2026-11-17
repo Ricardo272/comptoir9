@@ -8,11 +8,13 @@
 require_once __DIR__ . '/../db.php';
 
 // Colonnes attendues par includes/carte-produit.php, et la règle de visibilité.
+// rayon_slug : le sous-rayon du produit, dont l'illustration remplace une photo absente.
 // À compléter par « AND … ORDER BY … LIMIT … ».
 const SQL_PRODUITS = "
-    SELECT p.slug, p.nom, p.prix, p.prix_barre, p.stock, b.nom AS boutique
+    SELECT p.slug, p.nom, p.prix, p.prix_barre, p.stock, b.nom AS boutique, r.slug AS rayon_slug
     FROM produits p
     JOIN boutiques b ON b.id = p.boutique_id
+    JOIN rayons r ON r.id = p.rayon_id
     WHERE p.etat = 'en_vente' AND b.etat = 'active'";
 
 /** Les derniers produits mis en vente. */
@@ -214,4 +216,28 @@ function boutique(string $slug): ?array
 function slugsProduits(): array
 {
     return db()->query(SQL_PRODUITS . ' ORDER BY p.id')->fetchAll(PDO::FETCH_COLUMN);
+}
+
+/**
+ * L'image d'un produit, dans assets/img/ : sa photo « produits/<slug>.jpg » si
+ * elle existe, sinon l'illustration de son sous-rayon « rayons/<slug>.svg ».
+ * Pour donner une vraie photo à un produit, il suffit de déposer le fichier.
+ * Attend un produit avec 'slug' et 'rayon_slug'.
+ */
+function cheminImageProduit(array $produit): string
+{
+    $photo = 'produits/' . $produit['slug'] . '.jpg';
+    return is_file(__DIR__ . '/../../assets/img/' . $photo) ? $photo : 'rayons/' . $produit['rayon_slug'] . '.svg';
+}
+
+/**
+ * La balise <img> d'un produit, carrée. Une illustration est décorative (texte
+ * alternatif vide : le nom du produit est toujours écrit à côté) ; une vraie
+ * photo est décrite par le nom du produit.
+ */
+function imageProduit(array $produit, int $taille, string $classe = '', bool $prioritaire = false): string
+{
+    $chemin = cheminImageProduit($produit);
+    $alt = str_ends_with($chemin, '.svg') ? '' : $produit['nom'];
+    return image($chemin, $alt, $taille, $taille, $classe, $prioritaire);
 }

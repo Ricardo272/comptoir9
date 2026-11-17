@@ -42,7 +42,7 @@ RedirectMatch 404 ^/(includes|config|sql|outils|tests)(/|$)
 
     # Les CSS, JS et images ont un numéro de version dans leur adresse (asset(), image()) :
     # quand un fichier change, son adresse change. Le navigateur peut donc les garder un an.
-    <FilesMatch "\.(css|js|woff2|png|jpe?g|webp|avif)$">
+    <FilesMatch "\.(css|js|woff2|png|jpe?g|webp|avif|svg)$">
         Header set Cache-Control "public, max-age=31536000, immutable"
     </FilesMatch>
 

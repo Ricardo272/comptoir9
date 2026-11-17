@@ -136,6 +136,16 @@ $partage = requete($base . '/assets/img/partage.jpg');
 verifier('accueil : fiche Organization et image de partage en ligne', $accueilFiche
     && str_contains($accueil['corps'], 'property="og:image"') && $partage['code'] === 200);
 
+$illustrations = db()->query('SELECT slug FROM rayons WHERE parent_id IS NOT NULL')->fetchAll(PDO::FETCH_COLUMN);
+$manquantes = array_filter($illustrations, function ($slug) use ($base) {
+    $r = requete("$base/assets/img/rayons/$slug.svg");
+    return $r['code'] !== 200 || !str_contains($r['entetes']['content-type'] ?? '', 'image/svg+xml');
+});
+verifier(count($illustrations) . ' illustrations de sous-rayon servies en SVG' . ($manquantes ? ' — manque : ' . implode(', ', $manquantes) : ''), !$manquantes);
+verifier('fiche produit : image dans les données structurées, sans image de remplacement',
+    str_contains($fichePage = requete($base . '/produit.php?produit=jeu-cordee')['corps'], '"image":"' . $base . '/assets/img/rayons/jeux-de-societe.svg"')
+    && !str_contains($fichePage, 'image-remplacement'));
+
 echo "Catalogue : saisies piégées\n";
 $xss = requete($base . '/catalogue.php?q=' . rawurlencode('<script>alert(1)</script>'));
 verifier('balise script dans la recherche : échappée', $xss['code'] === 200 && !str_contains($xss['corps'], '<script>alert(1)</script>'));
