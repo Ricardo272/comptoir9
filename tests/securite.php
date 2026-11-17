@@ -565,7 +565,11 @@ db()->exec("UPDATE produits SET prix = 1, prix_barre = NULL, stock = 0, etat = '
 db()->exec("UPDATE boutiques SET etat = 'suspendue' WHERE slug = 'maison-lin'");
 db()->exec("UPDATE messages SET traite = 1");
 db()->exec("INSERT INTO produits (boutique_id, rayon_id, slug, nom, description, caracteristiques, prix, stock, delai_jours)
-            VALUES (1, 11, 'ajoute-par-un-visiteur', 'Ajouté par un visiteur', 'Test.', 'Test', 1000, 5, 2)");
+            VALUES ((SELECT id FROM boutiques WHERE slug = 'octet-et-cie'), (SELECT id FROM rayons WHERE slug = 'ordinateurs-tablettes'),
+                    'ajoute-par-un-visiteur', 'Ajouté par un visiteur', 'Test.', 'Test', 1000, 5, 2)");
+// Un vrai compte (hors démo), créé ici : la remise à zéro ne doit pas y toucher, quel que soit le serveur
+db()->exec("DELETE FROM comptes WHERE identifiant = 'test-reset-garde'");
+$creer->execute(['test-reset-garde', password_hash(bin2hex(random_bytes(12)), PASSWORD_DEFAULT), 'admin', null]);
 
 // Personne en démo depuis 20 minutes : le visiteur suivant trouve l'état de départ
 $personne();
@@ -581,7 +585,8 @@ verifier('remise à zéro : produit rétabli, boutique en ligne, produit ajouté
     && !(int) $valeur("SELECT COUNT(*) FROM produits WHERE slug = 'ajoute-par-un-visiteur'")
     && (int) $valeur('SELECT COUNT(*) FROM produits') === (int) $valeur('SELECT COUNT(*) FROM produits_depart'));
 verifier('remise à zéro : les identifiants des produits ne changent pas', $idProduit('velo-gravel-braquet-g1') === $gravelId);
-verifier('remise à zéro : le vrai compte « octet » est gardé', (int) $valeur("SELECT COUNT(*) FROM comptes WHERE demo = 0 AND identifiant = 'octet'") === 1);
+verifier('remise à zéro : un vrai compte est gardé', (int) $valeur("SELECT COUNT(*) FROM comptes WHERE demo = 0 AND identifiant = 'test-reset-garde'") === 1);
+db()->exec("DELETE FROM comptes WHERE identifiant = 'test-reset-garde'");
 $page = requete("$base/admin/commandes.php", null, $admin)['corps'];
 verifier('admin de démo : commandes affichées, bandeau de démonstration', str_contains($page, 'Camille Martin') && str_contains($page, 'Démonstration'));
 verifier('admin de démo : les pages vendeur lui sont refusées (403)', requete("$base/admin/colis.php", null, $admin)['code'] === 403);
