@@ -161,6 +161,8 @@ require_once __DIR__ . '/includes/header.php';
             </p>
 
 <?php if ($resultat['produits']): ?>
+            <!-- Titre lu par les lecteurs d'écran : les cartes sont des h3, il leur faut un h2 au-dessus -->
+            <h2 class="visuellement-cache">Produits</h2>
             <div class="grille">
 <?php foreach ($resultat['produits'] as $p): ?>
 <?php require __DIR__ . '/includes/carte-produit.php'; ?>
