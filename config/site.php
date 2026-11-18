@@ -19,6 +19,9 @@ return [
     // livraison » et contenu jamais vide. Mettre false pour une vraie boutique.
     'demo' => true,
 
+    // Code source public du site (lien dans les mentions légales)
+    'code_source' => 'https://github.com/Ricardo272/comptoir9',
+
     'description' => 'Comptoir 9, la place de marché des boutiques indépendantes : high-tech, cuisine, '
                    . 'maison, sport et jeux. Vendeurs vérifiés, prix sans surprise, délai annoncé.',
 

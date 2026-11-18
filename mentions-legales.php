@@ -45,6 +45,8 @@ $hebergeur = configLocale()['hebergeur'] ?? null;
             <h2>Propriété intellectuelle</h2>
             <p>
                 Les textes, la mise en page et le code du site sont la propriété de leur auteur.
+                Le code source est consultable sur
+                <a href="<?= e($site['code_source']) ?>" rel="noopener">GitHub</a>.
                 Les polices Bricolage Grotesque, Inter et DM Mono sont distribuées sous licence libre
                 SIL Open Font License 1.1.
             </p>
