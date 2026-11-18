@@ -86,7 +86,7 @@ PHP 8 et MySQL, sans framework · Projet de portfolio de Ricardo Remond
 
 | Contrôle | Résultat |
 |---|---|
-| `tests/securite.php` | 143 vérifications sur le site en ligne (141 en local, sans HTTPS), vu de l'extérieur : pages sans cookie, en-têtes, HTTPS, dossiers internes, saisies piégées, CSRF, sessions, rôles, cloisonnement des vendeurs, démonstration, 280 adresses du plan du site |
+| `tests/securite.php` | 150 vérifications sur le site en ligne (148 en local, sans HTTPS), vu de l'extérieur : pages sans cookie, en-têtes, HTTPS, dossiers internes, saisies piégées, CSRF, sessions, retour après ajout au panier (aucune redirection vers un autre site), rôles, cloisonnement des vendeurs, démonstration, 280 adresses du plan du site |
 | `tests/catalogue.php` | 70 vérifications : rayons, recherche, filtres, tri, pagination, visibilité, droits de l'utilisateur MySQL |
 | `tests/commande.php` | 60 vérifications : frais de port, découpage en colis, stocks, dernier exemplaire, suivi |
 | `tests/helpers.php` | 26 vérifications : prix, échappement, images, données structurées |
