@@ -23,7 +23,7 @@ PHP 8 et MySQL, sans framework · Projet de portfolio de Ricardo Remond
 
 ## Ce que fait le site
 
-- **Une place de marché multi-vendeurs** : 80 produits, 5 rayons et 20 sous-rayons, recherche,
+- **Une place de marché multi-vendeurs** : 240 produits, 5 rayons et 20 sous-rayons, recherche,
   filtres (boutique, prix, en stock), tri et pagination. Tout passe par l'adresse : une recherche
   se met en favori, et **le site marche sans JavaScript**.
 - **Un seul panier pour toutes les boutiques**, découpé en **un colis par boutique**, chacun avec ses
@@ -86,7 +86,7 @@ PHP 8 et MySQL, sans framework · Projet de portfolio de Ricardo Remond
 
 | Contrôle | Résultat |
 |---|---|
-| `tests/securite.php` | 143 vérifications sur le site en ligne (141 en local, sans HTTPS), vu de l'extérieur : pages sans cookie, en-têtes, HTTPS, dossiers internes, saisies piégées, CSRF, sessions, rôles, cloisonnement des vendeurs, démonstration, 120 adresses du plan du site |
+| `tests/securite.php` | 143 vérifications sur le site en ligne (141 en local, sans HTTPS), vu de l'extérieur : pages sans cookie, en-têtes, HTTPS, dossiers internes, saisies piégées, CSRF, sessions, rôles, cloisonnement des vendeurs, démonstration, 280 adresses du plan du site |
 | `tests/catalogue.php` | 70 vérifications : rayons, recherche, filtres, tri, pagination, visibilité, droits de l'utilisateur MySQL |
 | `tests/commande.php` | 60 vérifications : frais de port, découpage en colis, stocks, dernier exemplaire, suivi |
 | `tests/helpers.php` | 26 vérifications : prix, échappement, images, données structurées |
@@ -116,7 +116,8 @@ Apache avec PHP 8.1+ (extensions `intl`, `mbstring`, `pdo_mysql`) et MySQL 8 ou 
 2. Base de données, en `root` :
    - mettre un mot de passe à la place de `CHANGER_CE_MOT_DE_PASSE` dans `sql/creation-base.sql`,
      puis exécuter ce fichier (base et utilisateur dédié) ;
-   - exécuter `sql/schema.sql` puis `sql/seed.sql`.
+   - exécuter `sql/schema.sql`, puis `sql/seed.sql`, puis `sql/produits-supplementaires.sql`
+     (160 produits de plus ; ce dernier fichier ne fait qu'ajouter et peut être relancé sans danger).
 3. Copier `config/config.example.php` en `config/config.local.php` et y mettre l'adresse du site,
    le même mot de passe et une clé secrète aléatoire (`php -r "echo bin2hex(random_bytes(32));"`).
    Ce fichier est exclu de Git.

@@ -411,8 +411,8 @@ try {
 
     // --- Produits --------------------------------------------------------------
     $page = requete("$base/admin/produits.php", null, $braquet)['corps'];
-    verifier('Mes produits : les 14 de Braquet, aucun d\'une autre boutique',
-        substr_count($page, '<li class="carte-admin') === 14 && !str_contains($page, 'Cordée'));
+    verifier('Mes produits : les 42 de Braquet, aucun d\'une autre boutique',
+        substr_count($page, '<li class="carte-admin') === 42 && !str_contains($page, 'Cordée'));
     verifier('ouvrir le produit d\'une autre boutique : 404', requete("$base/admin/produit.php?id=$jeu", null, $braquet)['code'] === 404);
 
     $champs = ['nom' => 'Kit modifié par le test', 'rayon_id' => (string) $valeur("SELECT id FROM rayons WHERE slug = 'entretien-pieces'"),
@@ -493,9 +493,9 @@ try {
         requete("$base/admin/boutiques.php", null, $vendeurBraquet)['code'] === 403
         && requete("$base/admin/moderation.php", null, $vendeurBraquet)['code'] === 403);
     $pages = [requete("$base/admin/boutiques.php", null, $modo), requete("$base/admin/moderation.php", null, $modo)];
-    verifier('admin : Boutiques (5) et Produits (80) affichées, sans erreur PHP',
+    verifier('admin : Boutiques (5) et Produits (240) affichées, sans erreur PHP',
         $pages[0]['code'] === 200 && substr_count($pages[0]['corps'], '<li class="carte-admin') === 5
-        && $pages[1]['code'] === 200 && substr_count($pages[1]['corps'], '<li class="liste-moderation__ligne') === 80
+        && $pages[1]['code'] === 200 && substr_count($pages[1]['corps'], '<li class="liste-moderation__ligne') === 240
         && !preg_match('/Warning|Notice|Deprecated|Fatal error/', $pages[0]['corps'] . $pages[1]['corps']));
     $csrfModo = csrfDe("$base/admin/boutiques.php", $modo);
 

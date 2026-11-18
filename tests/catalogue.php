@@ -28,8 +28,8 @@ function verifier(string $nom, mixed $obtenu, mixed $attendu, bool $silencieux =
     return $ok;
 }
 
-// Le contrôle doit savoir échouer : le seed contient 80 produits, pas 81.
-if (verifier('cas faux', count(produitsNouveautes(200)), 81, true)) {
+// Le contrôle doit savoir échouer : seed.sql et produits-supplementaires.sql font 240 produits, pas 241.
+if (verifier('cas faux', count(produitsNouveautes(300)), 241, true)) {
     echo 'ÉCHEC  le contrôle accepte un résultat faux' . PHP_EOL;
     exit(1);
 }
@@ -47,12 +47,12 @@ $cas = [
 ];
 
 // --- Produits de l'accueil -------------------------------------------------
-$tous       = produitsNouveautes(200);
+$tous       = produitsNouveautes(300);
 $nouveautes = produitsNouveautes(8);
 $affaires   = produitsBonnesAffaires(4);
 $remise     = fn ($p) => ($p['prix_barre'] - $p['prix']) / $p['prix_barre'];
 
-$cas[] = ['80 produits visibles',        count($tous), 80];
+$cas[] = ['240 produits visibles',       count($tous), 240];
 $cas[] = ['8 nouveautés',                count($nouveautes), 8];
 $cas[] = ['nouveautés = les 8 premiers', array_column($nouveautes, 'slug'), array_slice(array_column($tous, 'slug'), 0, 8)];
 $cas[] = ['prix en centimes entiers',    is_int($tous[0]['prix']), true];
@@ -64,36 +64,36 @@ $cas[] = ['remises décroissantes',       $remise($affaires[0]) >= $remise($affa
 // --- Boutiques -------------------------------------------------------------
 $boutiques = boutiques();
 $cas[] = ['5 boutiques',          count($boutiques), 5];
-$cas[] = ['80 produits au total', array_sum(array_column($boutiques, 'nb_produits')), 80];
+$cas[] = ['240 produits au total', array_sum(array_column($boutiques, 'nb_produits')), 240];
 
 // --- Visibilité : boutique suspendue, produit retiré ou masqué ---------------
 db()->beginTransaction();
-db()->exec("UPDATE boutiques SET etat = 'suspendue' WHERE slug = 'braquet'");            // 14 produits
+db()->exec("UPDATE boutiques SET etat = 'suspendue' WHERE slug = 'braquet'");            // 42 produits
 db()->exec("UPDATE produits SET etat = 'retire' WHERE slug = 'cable-usb-c-tresse-2m'");
 db()->exec("UPDATE produits SET etat = 'masque' WHERE slug = 'jeu-cordee'");
-$cas[] = ['suspendue, retiré, masqué : 64 visibles', count(produitsNouveautes(200)), 64];
+$cas[] = ['suspendue, retiré, masqué : 196 visibles', count(produitsNouveautes(300)), 196];
 $cas[] = ['boutique suspendue absente',              count(boutiques()), 4];
-$cas[] = ['plan du site : 64 produits seulement',     count(slugsProduits()), 64];
+$cas[] = ['plan du site : 196 produits seulement',    count(slugsProduits()), 196];
 db()->rollBack();
-$cas[] = ['base intacte après le test', count(produitsNouveautes(200)), 80];
-$cas[] = ['plan du site : 80 produits',  count(slugsProduits()), 80];
+$cas[] = ['base intacte après le test', count(produitsNouveautes(300)), 240];
+$cas[] = ['plan du site : 240 produits', count(slugsProduits()), 240];
 
 // --- Recherche, filtres, tri, pagination ---------------------------------------
 $total = fn (array $filtres) => rechercherProduits($filtres)['total'];
 $sql   = fn (string $requete) => (int) db()->query($requete)->fetchColumn(); // comptage indépendant
 
-$cas[] = ['sans filtre : 80, 4 pages',   array_slice(rechercherProduits([]), 0, 2), ['total' => 80, 'pages' => 4]];
+$cas[] = ['sans filtre : 240, 10 pages', array_slice(rechercherProduits([]), 0, 2), ['total' => 240, 'pages' => 10]];
 $cas[] = ['page 1 : 24 produits',        count(rechercherProduits([])['produits']), 24];
-$cas[] = ['page 4 : 8 produits',         count(rechercherProduits([], 4)['produits']), 8];
-$cas[] = ['page 99 ramenée à la 4',      rechercherProduits([], 99)['page'], 4];
+$cas[] = ['page 10 : 24 produits',       count(rechercherProduits([], 10)['produits']), 24];
+$cas[] = ['page 99 ramenée à la 10',     rechercherProduits([], 99)['page'], 10];
 $cas[] = ['page 0 ramenée à la 1',       rechercherProduits([], 0)['page'], 1];
-$cas[] = ['rayon cuisine : 16',          $total(['rayon' => trouverRayon('cuisine')]), 16];
-$cas[] = ['sous-rayon cuisson : 4',      $total(['rayon' => trouverRayon('cuisson')]), 4];
-$cas[] = ['bonnes affaires : 19',        $total(['rayon' => trouverRayon('bonnes-affaires')]), 19];
+$cas[] = ['rayon cuisine : 48',          $total(['rayon' => trouverRayon('cuisine')]), 48];
+$cas[] = ['sous-rayon cuisson : 12',     $total(['rayon' => trouverRayon('cuisson')]), 12];
+$cas[] = ['bonnes affaires : 52',        $total(['rayon' => trouverRayon('bonnes-affaires')]), 52];
 $cas[] = ['rayon inconnu',               trouverRayon('inconnu'), null];
-$cas[] = ['boutique braquet : 14',       $total(['boutique' => 'braquet']), 14];
-$cas[] = ['cuisine chez Maison Lin : 2', $total(['rayon' => trouverRayon('cuisine'), 'boutique' => 'maison-lin']), 2];
-$cas[] = ['en stock : 75',               $total(['en_stock' => true]), 75];
+$cas[] = ['boutique braquet : 42',       $total(['boutique' => 'braquet']), 42];
+$cas[] = ['cuisine chez Maison Lin : 5', $total(['rayon' => trouverRayon('cuisine'), 'boutique' => 'maison-lin']), 5];
+$cas[] = ['en stock : 215',              $total(['en_stock' => true]), 215];
 $cas[] = ['de 10 à 20 €',                $total(['prix_min' => 1000, 'prix_max' => 2000]),
                                          $sql('SELECT COUNT(*) FROM produits WHERE prix BETWEEN 1000 AND 2000')];
 $cas[] = ['recherche « lin »',           $total(['q' => 'lin']),
@@ -124,7 +124,7 @@ $cas[] = ['4 autres produits',           count($autres), 4];
 $cas[] = ['autres : sans le produit lui-même', in_array($cocotte['slug'], array_column($autres, 'slug'), true), false];
 $cas[] = ['autres : même boutique',      array_unique(array_column($autres, 'boutique')), ['La Casserole Bleue']];
 $braquet = boutique('braquet');
-$cas[] = ['boutique : 14 produits',      (int) $braquet['nb_produits'], 14];
+$cas[] = ['boutique : 42 produits',      (int) $braquet['nb_produits'], 42];
 $cas[] = ['boutique : délai moyen',      (int) $braquet['delai_moyen'], $sql('SELECT ROUND(AVG(delai_jours)) FROM produits WHERE boutique_id = 4')];
 $cas[] = ['boutique inconnue',           boutique('inconnue'), null];
 
