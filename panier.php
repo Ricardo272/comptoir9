@@ -1,11 +1,12 @@
 <?php
 // Le panier : affichage (GET) et actions (POST : ajouter, modifier, retirer).
-// Après une action réussie, on redirige vers cette même page (Post/Redirect/Get) :
-// recharger la page ne rejoue pas l'action.
+// Après une action réussie, on redirige (Post/Redirect/Get) : recharger la page ne rejoue
+// pas l'action. Un ajout renvoie sur la page d'où il vient ; le reste, sur le panier.
 require_once __DIR__ . '/includes/helpers.php';
 require_once __DIR__ . '/includes/panier.php';
 
 $erreur = null;
+$destination = null; // page de retour après un ajout (voir pageDeRetour())
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
@@ -32,7 +33,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ouvrirSessionPanier(true); // le seul endroit où le cookie est déposé
             $deja = $_SESSION['panier'][$produit['id']] ?? 0;
             $_SESSION['panier'][$produit['id']] = min($deja + $quantite, $produit['stock'], QUANTITE_MAX);
-            ajouterAvis('« ' . $produit['nom'] . ' » a été ajouté à votre panier.');
+
+            // Le client reste sur sa page, où une fenêtre lui propose de continuer ou d'aller au panier
+            $destination = pageDeRetour($_POST['retour'] ?? null);
+            if ($destination !== null) {
+                $_SESSION['ajout'] = $produit['nom'];
+                // L'ancre ramène à la carte du produit : on ne perd pas sa place dans un long catalogue
+                $destination .= '#produit-' . $produit['slug'];
+            } else {
+                ajouterAvis('« ' . $produit['nom'] . ' » a été ajouté à votre panier.');
+            }
         }
     } elseif ($action === 'modifier' || $action === 'retirer') {
         $id = filter_var($_POST['id'] ?? null, FILTER_VALIDATE_INT);
@@ -52,7 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if ($erreur === null) {
-        header('Location: ' . url('panier.php'), true, 303);
+        header('Location: ' . ($destination ?? url('panier.php')), true, 303);
         exit;
     }
     http_response_code(400);

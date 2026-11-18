@@ -92,6 +92,32 @@ function lireAvis(): array
 }
 
 /**
+ * Page où revenir après un ajout au panier, envoyée par le formulaire.
+ * Seulement un chemin de ce site (« /catalogue.php?rayon=cuisine ») : jamais une adresse
+ * extérieure, sinon le site servirait de relais vers un site piégé.
+ * « //site » et « /\site » mènent ailleurs pour un navigateur : refusés aussi.
+ */
+function pageDeRetour(mixed $retour): ?string
+{
+    if (!is_string($retour) || strlen($retour) > 500
+        || !preg_match('{^/(?![/\\\\])[^\x00-\x20\x7F\\\\]*$}', $retour)) {
+        return null;
+    }
+    return $retour;
+}
+
+/** Produit qui vient d'être ajouté (nom), lu une seule fois : la fenêtre « Ajouté au panier ». */
+function lireAjout(): ?string
+{
+    if (session_status() !== PHP_SESSION_ACTIVE) {
+        return null;
+    }
+    $nom = $_SESSION['ajout'] ?? null;
+    unset($_SESSION['ajout']);
+    return is_string($nom) ? $nom : null;
+}
+
+/**
  * Les produits visibles parmi ces identifiants, indexés par identifiant.
  * $verrouiller (dans une transaction) : MySQL réserve ces lignes jusqu'à la fin
  * de la transaction ; une autre commande sur les mêmes produits attend son tour.

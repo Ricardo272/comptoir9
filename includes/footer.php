@@ -49,6 +49,10 @@
     </p>
 </footer>
 
+<?php if ($ajoutPanier !== null): ?>
+<?php require __DIR__ . '/fenetre-ajout.php'; ?>
+<?php endif; ?>
+
 <script src="<?= e(asset('assets/js/menu.js')) ?>" defer></script>
 </body>
 </html>

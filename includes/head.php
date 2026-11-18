@@ -17,6 +17,8 @@ require_once __DIR__ . '/panier.php';
 // La session doit s'ouvrir avant tout affichage. Elle ne s'ouvre que si le
 // visiteur a déjà un panier : une simple visite ne dépose aucun cookie.
 $articlesPanier = nombreArticlesPanier();
+// Produit ajouté juste avant : la fenêtre « Ajouté au panier » s'affiche une fois (footer.php)
+$ajoutPanier = lireAjout();
 
 // Les rayons du menu sont lus ici, AVANT tout affichage : si la base ne répond
 // pas, la page 503 peut encore remplacer toute la page (voir helpers.php).

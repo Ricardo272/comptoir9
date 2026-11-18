@@ -91,6 +91,7 @@ require_once __DIR__ . '/includes/header.php';
                         <input type="hidden" name="action" value="ajouter">
                         <input type="hidden" name="produit" value="<?= e($produit['slug']) ?>">
                         <input type="hidden" name="jeton" value="<?= e(creerJeton()) ?>">
+                        <input type="hidden" name="retour" value="<?= e($_SERVER['REQUEST_URI'] ?? '') ?>">
                         <p class="champ champ--court">
                             <label for="quantite">Quantité</label>
                             <input id="quantite" type="number" name="quantite" inputmode="numeric" min="1"

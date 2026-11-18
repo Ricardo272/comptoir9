@@ -5,6 +5,7 @@
  *    d'écran l'annoncent. Sans JavaScript, le menu reste affiché en liste.
  * 2. Sous-menus des rayons (<details>) : ils s'ouvrent sans JavaScript ;
  *    le script ajoute seulement la fermeture par Échap ou par un clic ailleurs.
+ * 3. Fenêtre « Ajouté au panier » : ouverte sans script, rendue modale ici.
  */
 {
     const bouton = document.querySelector('.nav-bouton');
@@ -40,4 +41,12 @@
             rayon.open = false;
         }
     });
+
+    // 3. Fenêtre « Ajouté au panier » : le serveur l'envoie ouverte (elle marche sans script).
+    //    Ici, on la rouvre en modale : fond assombri, focus gardé dedans, Échap pour fermer.
+    const fenetre = document.querySelector('.fenetre-ajout[open]');
+    if (fenetre && typeof fenetre.showModal === 'function') {
+        fenetre.close();
+        fenetre.showModal();
+    }
 }

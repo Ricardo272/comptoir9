@@ -15,6 +15,7 @@ if (PHP_SAPI !== 'cli') {
 }
 
 require_once __DIR__ . '/../includes/contact.php';
+require_once __DIR__ . '/../includes/panier.php'; // pageDeRetour()
 
 $base = rtrim(configLocale()['url_absolue'], '/');
 $echecs = 0;
@@ -172,6 +173,29 @@ $cookie = $r['entetes']['set-cookie'] ?? '';
 verifier('ajout normal : accepté, cookie HttpOnly et SameSite=Lax',
     $r['code'] === 303 && stripos($cookie, 'httponly') !== false && stripos($cookie, 'samesite=lax') !== false);
 $session = 'Cookie: ' . explode(';', $cookie)[0] . "\r\n";
+
+// Ajout depuis une carte ou une fiche : retour sur la page d'origine, jamais vers un autre site
+verifier('page de retour : chemin du site accepté', pageDeRetour('/catalogue.php?rayon=cuisson&page=2') === '/catalogue.php?rayon=cuisson&page=2');
+$retoursPieges = ['https://autre-site.test/', '//autre-site.test/', '/\\autre-site.test/', "/\r\nLocation: https://autre-site.test/",
+                  'catalogue.php', 'javascript:alert(1)', '', ['/'], null];
+verifier('page de retour : adresses extérieures, relatives ou piégées refusées',
+    array_filter($retoursPieges, fn ($retour) => pageDeRetour($retour) !== null) === []);
+$r = requete($base . '/panier.php', $ajout + ['jeton' => creerJeton(), 'retour' => '/catalogue.php?rayon=jeux-de-societe'], $session);
+verifier('ajout depuis une carte : retour sur la page d\'origine (303)',
+    $r['code'] === 303 && ($r['entetes']['location'] ?? '') === '/catalogue.php?rayon=jeux-de-societe#produit-jeu-cordee');
+$page = requete($base . '/catalogue.php?rayon=jeux-de-societe', null, $session)['corps'];
+verifier('fenêtre « Ajouté au panier » : nom du produit, Continuer et Voir le panier',
+    str_contains($page, '<dialog class="fenetre-ajout" open') && str_contains($page, 'Cordée, jeu coopératif')
+    && str_contains($page, 'method="dialog"') && str_contains($page, 'Voir le panier'));
+verifier('fenêtre affichée une seule fois', !str_contains(requete($base . '/catalogue.php?rayon=jeux-de-societe', null, $session)['corps'], 'fenetre-ajout'));
+$r = requete($base . '/panier.php', $ajout + ['jeton' => creerJeton(), 'retour' => 'https://autre-site.test/'], $session);
+verifier('ajout avec un retour vers un autre site : renvoyé au panier', $r['code'] === 303 && ($r['entetes']['location'] ?? '') === '/panier.php');
+$page = requete($base . '/catalogue.php?rayon=accessoires-cables')['corps'];
+$epuises = $compter("produits p JOIN rayons r ON r.id = p.rayon_id", "r.slug = 'accessoires-cables' AND p.etat = 'en_vente' AND p.stock = 0");
+verifier("cartes : un bouton d'ajout par produit en stock, aucun sur les $epuises épuisés",
+    $epuises > 0 && substr_count($page, '<form class="carte-produit__ajout"') === substr_count($page, '<article class="carte-produit') - $epuises
+    && substr_count($page, 'disabled>Épuisé</button>') === $epuises);
+
 verifier('modifier le panier sans jeton de session : refusé (400)',
     requete($base . '/panier.php', ['action' => 'retirer', 'id' => '1'], $session)['code'] === 400);
 $avant = $compter('commandes');
